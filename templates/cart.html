@@ -1,0 +1,116 @@
+[% WRAPPER 'layout.html' %]
+<div class="cart-page">
+    <h1>Корзина</h1>
+
+    [% IF cart_items.size %]
+        <div class="cart-items">
+            [% FOREACH item IN cart_items %]
+                <div class="cart-item">
+                    <div class="item-info">
+                        <h3>[% item.title %]</h3>
+                        <div class="info-row">
+                            <span class="label">Дата:</span>
+                            <span class="value">[% item.date %]</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Время:</span>
+                            <span class="value">[% item.time %]</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Цена:</span>
+                            <span class="value">[% item.price %] руб.</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Количество:</span>
+                            <span class="value">[% item.quantity %]</span>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button onclick="removeFromCart('[% item.event_id %]')" class="btn btn-danger">
+                            Удалить
+                        </button>
+                    </div>
+                </div>
+            [% END %]
+
+            <div class="cart-summary">
+                <h3>Итого билетов: [% cart_items.size %]</h3>
+                <form action="?action=checkout" method="POST" class="checkout-form">
+                    <button type="submit" class="btn btn-large">Оформить заказ</button>
+                </form>
+            </div>
+        </div>
+    [% ELSE %]
+        <div class="empty-cart">
+            <p>Ваша корзина пуста</p>
+            <a href="?action=events" class="btn">Перейти к мероприятиям</a>
+        </div>
+    [% END %]
+</div>
+
+<style>
+.cart-page {
+    padding: 2rem 0;
+}
+
+.cart-items {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.item-info {
+    flex: 1;
+}
+
+.item-actions {
+    margin-left: 1rem;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.cart-summary {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.empty-cart p {
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    color: #666;
+}
+</style>
+[% END %] 

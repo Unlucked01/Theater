@@ -1,0 +1,267 @@
+[% WRAPPER 'layout.html' %]
+<div class="events-page">
+    <h1>Мероприятия</h1>
+
+    <div class="filters">
+        <form action="/cgi-bin/index.cgi" method="GET" class="filter-form" accept-charset="UTF-8">
+            <input type="hidden" name="action" value="events">
+            
+            <div class="form-group">
+                <label for="search">Поиск по названию:</label>
+                <input type="text" id="search" name="search" value="[% search | html %]" placeholder="Название мероприятия">
+            </div>
+
+            <div class="form-group">
+                <label for="performers">Исполнители:</label>
+                <input type="text" id="performers" name="performers" value="[% performers | html %]" placeholder="Имя исполнителя">
+            </div>
+
+            <div class="form-group">
+                <label for="venue">Место проведения:</label>
+                <input type="text" id="venue" name="venue" value="[% venue | html %]" placeholder="Место проведения">
+            </div>
+
+            <div class="form-group">
+                <label for="date">Дата:</label>
+                <input type="date" id="date" name="date" value="[% selected_date %]">
+            </div>
+
+            <div class="form-group">
+                <label for="time_start">Время:</label>
+                <select id="time_start" name="time_start">
+                    <option value="">Любое время</option>
+                    <option value="morning" [% IF time_start == 'morning' %]selected[% END %]>Утро (09:00-12:00)</option>
+                    <option value="afternoon" [% IF time_start == 'afternoon' %]selected[% END %]>День (12:00-17:00)</option>
+                    <option value="evening" [% IF time_start == 'evening' %]selected[% END %]>Вечер (17:00-23:00)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="status">Статус:</label>
+                <select id="status" name="status">
+                    <option value="">Все мероприятия</option>
+                    <option value="future" [% IF status == 'future' %]selected[% END %]>Предстоящие</option>
+                    <option value="today" [% IF status == 'today' %]selected[% END %]>Сегодня</option>
+                    <option value="past" [% IF status == 'past' %]selected[% END %]>Прошедшие</option>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">Применить фильтры</button>
+                <a href="?action=events" class="btn btn-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+
+    [% IF events.size %]
+        <div class="events-grid">
+            [% FOREACH event IN events %]
+                <div class="event-card [% event.event_status %]">
+                    <h3>[% event.title %]</h3>
+                    [% IF event.performers %]
+                        <div class="performers">[% event.performers %]</div>
+                    [% END %]
+                    <div class="event-info">
+                        <div class="info-row">
+                            <span class="label">Дата:</span>
+                            <span class="value">[% event.date %]</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Время:</span>
+                            <span class="value">[% event.time %]</span>
+                        </div>
+                        [% IF event.venue %]
+                            <div class="info-row">
+                                <span class="label">Место:</span>
+                                <span class="value">[% event.venue %]</span>
+                            </div>
+                        [% END %]
+                        <div class="info-row">
+                            <span class="label">Цена:</span>
+                            <span class="value">[% event.price %] руб.</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Свободно мест:</span>
+                            <span class="value">[% event.available_seats %]</span>
+                        </div>
+                    </div>
+                    
+                    [% IF event.event_status != 'past' && event.available_seats > 0 %]
+                        [% IF user %]
+                            <button onclick="addToCart('[% event.id %]')" class="btn">
+                                Добавить в корзину
+                            </button>
+                        [% ELSE %]
+                            <a href="?action=login" class="btn">Войдите для покупки</a>
+                        [% END %]
+                    [% ELSIF event.event_status == 'past' %]
+                        <div class="event-status past">Мероприятие завершено</div>
+                    [% ELSIF event.available_seats == 0 %]
+                        <div class="event-status sold-out">Все билеты проданы</div>
+                    [% END %]
+                </div>
+            [% END %]
+        </div>
+
+        [% IF total_pages > 1 %]
+            <div class="pagination">
+                [% IF current_page > 1 %]
+                    <a href="?action=events&page=[% current_page - 1 %]" class="btn">&larr; Назад</a>
+                [% END %]
+
+                [% FOREACH page IN [1..total_pages] %]
+                    [% IF page == current_page %]
+                        <span class="current-page">[% page %]</span>
+                    [% ELSE %]
+                        <a href="?action=events&page=[% page %]">[% page %]</a>
+                    [% END %]
+                [% END %]
+
+                [% IF current_page < total_pages %]
+                    <a href="?action=events&page=[% current_page + 1 %]" class="btn">Вперед &rarr;</a>
+                [% END %]
+            </div>
+        [% END %]
+    [% ELSE %]
+        <p class="no-events">Мероприятия не найдены</p>
+    [% END %]
+</div>
+
+<style>
+.events-page {
+    padding: 2rem 0;
+}
+
+.filters {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #666;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-start;
+    margin-top: 1rem;
+}
+
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.event-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.event-card.past {
+    opacity: 0.7;
+    background: #f8f9fa;
+}
+
+.performers {
+    color: #666;
+    font-style: italic;
+    margin: 0.5rem 0;
+}
+
+.event-info {
+    margin: 1rem 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.label {
+    color: #666;
+}
+
+.value {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.event-status {
+    text-align: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-top: 1rem;
+}
+
+.event-status.past {
+    background: #95a5a6;
+    color: white;
+}
+
+.event-status.sold-out {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+}
+
+.pagination {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.pagination a, .pagination span {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    border-radius: 4px;
+}
+
+.pagination .current-page {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.no-events {
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+[% END %] 

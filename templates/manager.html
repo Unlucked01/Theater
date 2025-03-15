@@ -1,0 +1,141 @@
+[% INCLUDE 'header.html' %]
+
+<div class="container mt-4">
+    <h1>Панель менеджера</h1>
+    
+    <!-- Вкладки -->
+    <ul class="nav nav-tabs mb-4" id="managerTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="orders-tab" data-bs-toggle="tab" href="#orders" role="tab">Заказы</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="events-tab" data-bs-toggle="tab" href="#events" role="tab">Создать мероприятие</a>
+        </li>
+    </ul>
+    
+    <!-- Содержимое вкладок -->
+    <div class="tab-content" id="managerTabContent">
+        <!-- Вкладка с заказами -->
+        <div class="tab-pane fade show active" id="orders" role="tabpanel">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Пользователь</th>
+                            <th>Мероприятие</th>
+                            <th>Дата</th>
+                            <th>Время</th>
+                            <th>Количество</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        [% FOREACH order IN orders %]
+                        <tr>
+                            <td>[% order.id %]</td>
+                            <td>[% order.user_login %]</td>
+                            <td>[% order.event_title %]</td>
+                            <td>[% order.event_date %]</td>
+                            <td>[% order.event_time %]</td>
+                            <td>[% order.quantity %]</td>
+                            <td>[% order.total_price %] ₽</td>
+                            <td>
+                                <span class="badge [% IF order.status == 'pending' %]bg-warning[% ELSIF order.status == 'confirmed' %]bg-success[% ELSE %]bg-secondary[% END %]">
+                                    [% IF order.status == 'pending' %]
+                                        Ожидает
+                                    [% ELSIF order.status == 'confirmed' %]
+                                        Подтвержден
+                                    [% ELSIF order.status == 'cancelled' %]
+                                        Отменен
+                                    [% ELSE %]
+                                        [% order.status %]
+                                    [% END %]
+                                </span>
+                            </td>
+                            <td>
+                                [% IF order.status == 'pending' %]
+                                <form method="POST" action="/cgi-bin/index.cgi" class="d-inline">
+                                    <input type="hidden" name="action" value="update_order_status">
+                                    <input type="hidden" name="order_id" value="[% order.id %]">
+                                    <input type="hidden" name="status" value="confirmed">
+                                    <button type="submit" class="btn btn-success btn-sm">Подтвердить</button>
+                                </form>
+                                <form method="POST" action="/cgi-bin/index.cgi" class="d-inline">
+                                    <input type="hidden" name="action" value="update_order_status">
+                                    <input type="hidden" name="order_id" value="[% order.id %]">
+                                    <input type="hidden" name="status" value="cancelled">
+                                    <button type="submit" class="btn btn-danger btn-sm">Отменить</button>
+                                </form>
+                                [% END %]
+                            </td>
+                        </tr>
+                        [% END %]
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Вкладка создания мероприятия -->
+        <div class="tab-pane fade" id="events" role="tabpanel">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Создать новое мероприятие</h5>
+                    <form method="POST" action="/cgi-bin/index.cgi" accept-charset="UTF-8">
+                        <input type="hidden" name="action" value="create_event">
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Название</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="performers" class="form-label">Исполнители</label>
+                            <input type="text" class="form-control" id="performers" name="performers" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="venue" class="form-label">Место проведения</label>
+                            <input type="text" class="form-control" id="venue" name="venue" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Описание</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date" class="form-label">Дата</label>
+                                <input type="date" class="form-control" id="date" name="date" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="time" class="form-label">Время</label>
+                                <input type="time" class="form-control" id="time" name="time" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="price" class="form-label">Цена</label>
+                                <input type="number" class="form-control" id="price" name="price" min="0" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="available_seats" class="form-label">Количество мест</label>
+                                <input type="number" class="form-control" id="available_seats" name="available_seats" min="1" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Создать мероприятие</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+[% INCLUDE 'footer.html' %] 

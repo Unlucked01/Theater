@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[% title %] - Система заказа билетов</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/main.js"></script>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="?action=home">Главная</a></li>
+                <li><a href="?action=events">Мероприятия</a></li>
+                [% IF user %]
+                    <li><a href="?action=cart">Корзина</a></li>
+                    [% IF user.role == 'admin' %]
+                        <li><a href="?action=admin">Администрирование</a></li>
+                    [% END %]
+                    [% IF user.role == 'manager' %]
+                        <li><a href="?action=manager">Управление</a></li>
+                    [% END %]
+                    <li><a href="?action=logout">Выход</a></li>
+                [% ELSE %]
+                    <li><a href="?action=login">Вход</a></li>
+                [% END %]
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="container">
+            [% content %]
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Система заказа билетов</p>
+            <a href="#top">Наверх</a>
+        </div>
+    </footer>
+</body>
+</html> 

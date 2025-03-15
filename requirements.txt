@@ -1,0 +1,9 @@
+CGI::Simple
+DBI
+DBD::SQLite
+Template
+Crypt::PBKDF2
+JSON
+DateTime
+File::Spec
+MIME::Base64 

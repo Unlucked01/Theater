@@ -1,0 +1,220 @@
+[% WRAPPER 'layout.html' %]
+<div class="admin-page">
+    <h1>Панель администратора</h1>
+
+    <div class="admin-sections">
+        <div class="section">
+            <h2>Статистика продаж</h2>
+            <div class="stats-container">
+                <div class="stats-card">
+                    <h3>Общее количество заказов</h3>
+                    <p class="stats-number">[% total_orders %]</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Активные заказы</h3>
+                    <p class="stats-number">[% active_orders %]</p>
+                </div>
+                <div class="stats-card">
+                    <h3>Всего мероприятий</h3>
+                    <p class="stats-number">[% total_events %]</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Продажи по мероприятиям</h3>
+                <div class="sales-chart">
+                    [% FOREACH stat IN event_stats %]
+                        <div class="chart-bar">
+                            <div class="bar-fill" style="height: [% stat.percentage %]%"></div>
+                            <span class="bar-label">[% stat.title %]</span>
+                            <span class="bar-value">[% stat.sales %]</span>
+                        </div>
+                    [% END %]
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Управление пользователями</h2>
+            <div class="users-list">
+                [% FOREACH user IN users %]
+                    <div class="user-card">
+                        <div class="user-info">
+                            <h3>[% user.login %]</h3>
+                            <p>Роль: [% user.role %]</p>
+                        </div>
+                        <div class="user-actions">
+                            <select onchange="updateUserRole('[% user.id %]', this.value)">
+                                <option value="user" [% IF user.role == 'user' %]selected[% END %]>Пользователь</option>
+                                <option value="manager" [% IF user.role == 'manager' %]selected[% END %]>Менеджер</option>
+                                <option value="admin" [% IF user.role == 'admin' %]selected[% END %]>Администратор</option>
+                            </select>
+                            <button onclick="deleteUser('[% user.id %]')" class="btn btn-danger">Удалить</button>
+                        </div>
+                    </div>
+                [% END %]
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.admin-page {
+    padding: 2rem 0;
+}
+
+.admin-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+.section {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stats-card {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.chart-container {
+    margin-top: 2rem;
+}
+
+.sales-chart {
+    display: flex;
+    align-items: flex-end;
+    height: 300px;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.chart-bar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.bar-fill {
+    width: 100%;
+    background-color: var(--secondary-color);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.3s ease;
+}
+
+.bar-label {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    text-align: center;
+    word-break: break-word;
+}
+
+.bar-value {
+    position: absolute;
+    top: -20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.users-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.user-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+.user-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.user-actions select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+</style>
+
+<script>
+function updateUserRole(userId, newRole) {
+    if (confirm('Вы уверены, что хотите изменить роль пользователя?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'index.cgi';
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'update_user_role';
+        form.appendChild(actionInput);
+
+        const userIdInput = document.createElement('input');
+        userIdInput.type = 'hidden';
+        userIdInput.name = 'user_id';
+        userIdInput.value = userId;
+        form.appendChild(userIdInput);
+
+        const roleInput = document.createElement('input');
+        roleInput.type = 'hidden';
+        roleInput.name = 'role';
+        roleInput.value = newRole;
+        form.appendChild(roleInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function deleteUser(userId) {
+    if (confirm('Вы уверены, что хотите удалить пользователя? Это действие нельзя отменить.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'index.cgi';
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'delete_user';
+        form.appendChild(actionInput);
+
+        const userIdInput = document.createElement('input');
+        userIdInput.type = 'hidden';
+        userIdInput.name = 'user_id';
+        userIdInput.value = userId;
+        form.appendChild(userIdInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+[% END %] 

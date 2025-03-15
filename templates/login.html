@@ -1,0 +1,64 @@
+[% INCLUDE 'header.html' %]
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            [% IF error %]
+            <div class="alert alert-danger" role="alert">
+                [% error %]
+            </div>
+            [% END %]
+            
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="login-tab" data-bs-toggle="tab" href="#login">Вход</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="register-tab" data-bs-toggle="tab" href="#register">Регистрация</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="login">
+                            <form method="POST" action="/cgi-bin/index.cgi" accept-charset="UTF-8">
+                                <input type="hidden" name="action" value="do_login">
+                                <div class="mb-3">
+                                    <label for="login-username" class="form-label">Логин</label>
+                                    <input type="text" class="form-control" id="login-username" name="login" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="login-password" class="form-label">Пароль</label>
+                                    <input type="password" class="form-control" id="login-password" name="password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Войти</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="register">
+                            <form method="POST" action="/cgi-bin/index.cgi" accept-charset="UTF-8">
+                                <input type="hidden" name="action" value="register">
+                                <div class="mb-3">
+                                    <label for="register-username" class="form-label">Логин</label>
+                                    <input type="text" class="form-control" id="register-username" name="login" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-password" class="form-label">Пароль</label>
+                                    <input type="password" class="form-control" id="register-password" name="password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-password-confirm" class="form-label">Подтверждение пароля</label>
+                                    <input type="password" class="form-control" id="register-password-confirm" name="password_confirm" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+[% INCLUDE 'footer.html' %] 

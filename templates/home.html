@@ -1,0 +1,121 @@
+[% WRAPPER 'layout.html' %]
+<div class="home-page">
+    <h1>Добро пожаловать в систему заказа билетов!</h1>
+    
+    <div class="features">
+        <div class="feature-card">
+            <h2>Мероприятия</h2>
+            <p>Просматривайте актуальные концерты и спектакли</p>
+            <a href="?action=events" class="btn">Смотреть мероприятия</a>
+        </div>
+
+        [% IF user %]
+            <div class="feature-card">
+                <h2>Моя корзина</h2>
+                <p>Управляйте вашими билетами</p>
+                <a href="?action=cart" class="btn">Перейти в корзину</a>
+            </div>
+
+            [% IF user.role == 'manager' %]
+                <div class="feature-card">
+                    <h2>Управление мероприятиями</h2>
+                    <p>Создавайте и редактируйте мероприятия</p>
+                    <a href="?action=manager" class="btn">Панель управления</a>
+                </div>
+            [% END %]
+
+            [% IF user.role == 'admin' %]
+                <div class="feature-card">
+                    <h2>Администрирование</h2>
+                    <p>Просмотр статистики и управление системой</p>
+                    <a href="?action=admin" class="btn">Панель администратора</a>
+                </div>
+            [% END %]
+        [% ELSE %]
+            <div class="feature-card">
+                <h2>Вход в систему</h2>
+                <p>Войдите для покупки билетов</p>
+                <a href="?action=login" class="btn">Войти</a>
+            </div>
+        [% END %]
+    </div>
+
+    <div class="latest-events">
+        <h2>Ближайшие мероприятия</h2>
+        [% IF latest_events.size %]
+            <div class="events-grid">
+                [% FOREACH event IN latest_events %]
+                    <div class="event-card">
+                        <h3>[% event.title %]</h3>
+                        <p class="event-info">
+                            <span class="event-date">[% event.event_time %]</span>
+                            <span class="event-venue">[% event.venue %]</span>
+                        </p>
+                        <p class="event-performer">[% event.performer %]</p>
+                        <a href="?action=event&id=[% event.id %]" class="btn">Подробнее</a>
+                    </div>
+                [% END %]
+            </div>
+        [% ELSE %]
+            <p>Нет предстоящих мероприятий</p>
+        [% END %]
+    </div>
+</div>
+
+<style>
+.home-page {
+    padding: 2rem 0;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.feature-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.feature-card h2 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.feature-card p {
+    margin-bottom: 1.5rem;
+}
+
+.events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.event-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.event-info {
+    display: flex;
+    justify-content: space-between;
+    margin: 0.5rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.event-performer {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+</style>
+[% END %] 
