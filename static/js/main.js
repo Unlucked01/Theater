@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Функция для добавления билета в корзину
-    window.addToCart = function(eventId) {
+    window.addToCart = function(eventId, quantity = 1) {
         const formData = new URLSearchParams();
         formData.append('action', 'add_to_cart');
         formData.append('event_id', eventId);
+        formData.append('quantity', quantity);
 
         fetch('/cgi-bin/index.cgi', {
             method: 'POST',

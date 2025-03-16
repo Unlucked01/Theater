@@ -29,17 +29,14 @@
 
         [% IF user %]
             [% IF event.available_seats > 0 %]
-                <form action="index.cgi" method="POST" class="purchase-form">
-                    <input type="hidden" name="action" value="add_to_cart">
-                    <input type="hidden" name="event_id" value="[% event.id %]">
-                    
+                <div class="purchase-section">
                     <div class="form-group">
                         <label for="quantity">Количество билетов:</label>
-                        <input type="number" id="quantity" name="quantity" min="1" max="[% event.available_seats %]" value="1" required>
+                        <input type="number" id="quantity" min="1" max="[% event.available_seats %]" value="1" required>
                     </div>
 
-                    <button type="submit" class="btn">Добавить в корзину</button>
-                </form>
+                    <button type="button" onclick="addToCart([% event.id %], document.getElementById('quantity').value)" class="btn">Добавить в корзину</button>
+                </div>
             [% ELSE %]
                 <div class="sold-out">
                     <p>Все билеты проданы</p>
@@ -102,7 +99,7 @@
     margin-bottom: 1rem;
 }
 
-.purchase-form {
+.purchase-section {
     margin-top: 2rem;
     padding-top: 2rem;
     border-top: 1px solid #eee;

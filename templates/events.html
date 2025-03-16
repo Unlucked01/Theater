@@ -88,9 +88,20 @@
                     
                     [% IF event.event_status != 'past' && event.available_seats > 0 %]
                         [% IF user %]
-                            <button onclick="addToCart('[% event.id %]')" class="btn">
-                                Добавить в корзину
-                            </button>
+                            <div class="ticket-controls">
+                                <div class="quantity-control">
+                                    <label for="quantity-[% event.id %]">Количество:</label>
+                                    <input type="number" 
+                                           id="quantity-[% event.id %]" 
+                                           min="1" 
+                                           max="[% event.available_seats %]" 
+                                           value="1" 
+                                           class="form-control quantity-input">
+                                </div>
+                                <button onclick="addToCart([% event.id %], document.getElementById('quantity-[% event.id %]').value)" class="btn">
+                                    Добавить в корзину
+                                </button>
+                            </div>
                         [% ELSE %]
                             <a href="?action=login" class="btn">Войдите для покупки</a>
                         [% END %]
@@ -262,6 +273,31 @@
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ticket-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.quantity-control label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.quantity-input {
+    width: 80px;
+    padding: 0.3rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 </style>
 [% END %] 
