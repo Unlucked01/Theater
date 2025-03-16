@@ -294,12 +294,18 @@ sub show_admin {
         return;
     }
     
+    my $stats = get_sales_statistics();
+    
     my $vars = {
         title => 'Админ-панель',
         user => $current_user,
         users => get_all_users(),
         events => get_all_events(),
-        orders => get_all_orders()
+        orders => get_all_orders(),
+        total_orders => $stats->{total_orders},
+        active_orders => $stats->{active_orders},
+        total_events => $stats->{total_events},
+        event_stats => $stats->{event_stats}
     };
     
     $template->process('admin.html', $vars)
@@ -415,7 +421,7 @@ sub handle_logout {
             -value => '',
             -expires => '-1h'
         ),
-        -location => '/cgi-bin/index.cgi?action=events'
+        -location => '/cgi-bin/index.cgi?action=home'
     );
 }
 
@@ -719,4 +725,45 @@ sub show_event {
     
     $template->process('event.html', $vars)
         or die $template->error();
+}
+
+sub get_sales_statistics {
+    # Используем глобальное подключение к БД
+    
+    # Общее количество заказов
+    my $total_orders = $dbh->selectrow_array("SELECT COUNT(*) FROM orders");
+    
+    # Активные заказы (в статусе "Ожидает" или "Подтвержден")
+    my $active_orders = $dbh->selectrow_array("SELECT COUNT(*) FROM orders WHERE status IN ('Ожидает', 'Подтвержден')");
+    
+    # Общее количество мероприятий
+    my $total_events = $dbh->selectrow_array("SELECT COUNT(*) FROM events");
+    
+    # Статистика продаж по мероприятиям
+    my $event_stats = $dbh->selectall_arrayref(
+        "SELECT e.title, COUNT(o.id) as sales 
+         FROM events e 
+         LEFT JOIN orders o ON e.id = o.event_id 
+         GROUP BY e.id, e.title 
+         ORDER BY sales DESC 
+         LIMIT 10",
+        { Slice => {} }
+    );
+    
+    # Вычисляем процент для каждого мероприятия
+    my $max_sales = 0;
+    foreach my $stat (@$event_stats) {
+        $max_sales = $stat->{sales} if $stat->{sales} > $max_sales;
+    }
+    
+    foreach my $stat (@$event_stats) {
+        $stat->{percentage} = $max_sales ? int(($stat->{sales} / $max_sales) * 100) : 0;
+    }
+    
+    return {
+        total_orders => $total_orders,
+        active_orders => $active_orders,
+        total_events => $total_events,
+        event_stats => $event_stats
+    };
 } 
