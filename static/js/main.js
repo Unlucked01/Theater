@@ -93,4 +93,29 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Произошла ошибка при обновлении статуса');
         });
     };
+
+    // Функция для оформления заказа
+    window.checkout = function() {
+        const formData = new URLSearchParams();
+        formData.append('action', 'checkout');
+
+        fetch('/cgi-bin/index.cgi', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'Accept': 'application/json; charset=UTF-8'
+            },
+            body: formData.toString()
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            window.location.href = '/cgi-bin/index.cgi?action=cart';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при оформлении заказа');
+        });
+    };
 }); 

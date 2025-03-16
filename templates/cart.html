@@ -35,9 +35,7 @@
 
             <div class="cart-summary">
                 <h3>Итого билетов: [% cart_items.size %]</h3>
-                <form action="?action=checkout" method="POST" class="checkout-form">
-                    <button type="submit" class="btn btn-large">Оформить заказ</button>
-                </form>
+                <button onclick="checkout()" class="btn btn-large">Оформить заказ</button>
             </div>
         </div>
     [% ELSE %]

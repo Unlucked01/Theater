@@ -522,7 +522,14 @@ sub handle_remove_from_cart {
 
 sub handle_checkout {
     unless ($current_user) {
-        print $cgi->redirect('?action=login');
+        print $cgi->header(
+            -type => 'text/html',
+            -charset => 'utf-8',
+            -status => '302 Found',
+            -location => 'http://localhost:8080/cgi-bin/index.cgi?action=login'
+        );
+        print "Перенаправление на страницу входа...\n";
+        print '<script>window.location.href="http://localhost:8080/cgi-bin/index.cgi?action=login";</script>';
         return;
     }
     
@@ -535,7 +542,8 @@ sub handle_checkout {
         $sth->execute($current_user->{id});
     };
     
-    print $cgi->redirect('?action=cart');
+    
+    print '<script>alert("Заказ оформлен");</script>';
 }
 
 sub handle_create_event {
