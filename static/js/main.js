@@ -21,18 +21,17 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             if (data.success) {
-                alert(data.message);
+                //alert(data.message);
                 window.location.href = '/cgi-bin/index.cgi?action=cart';
             } else {
                 if (data.error === 'Необходима авторизация') {
                     window.location.href = '/cgi-bin/index.cgi?action=login';
                 } else {
-                    alert(data.error || 'Ошибка при добавлении билета в корзину');
+                    alert(data.error || 'Произошла ошибка при добавлении в корзину');
                 }
             }
         })
         .catch(error => {
-            console.error('Error:', error);
             alert('Произошла ошибка при добавлении в корзину');
         });
     };

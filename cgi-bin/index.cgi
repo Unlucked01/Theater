@@ -417,7 +417,6 @@ sub handle_logout {
         ),
         -location => '/cgi-bin/index.cgi?action=events'
     );
-    show_home();
 }
 
 sub handle_add_to_cart {
