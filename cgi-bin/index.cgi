@@ -67,7 +67,8 @@ my $template = Template->new({
 my $current_user = get_current_user();
 
 # Не выводим заголовок для действий, которые сами управляют заголовками
-unless ($action eq 'logout' || $action eq 'add_to_cart' || $action eq 'register' || $action eq 'do_login') {
+unless ($action eq 'logout' || $action eq 'add_to_cart' || $action eq 'register' || $action eq 'do_login' || 
+        $action eq 'update_order_status' || $action eq 'update_user_role') {
     print $cgi->header(-type => 'text/html', -charset => 'utf-8');
 }
 
@@ -362,12 +363,24 @@ sub handle_login {
             -type => 'text/html',
             -charset => 'utf-8',
             -cookie => $cookie,
-            -location => 'http://localhost:8080/cgi-bin/index.cgi?action=events'
+            -status => '302 Found',
+            -location => 'http://localhost:8080/cgi-bin/index.cgi?action=home'
         );
+        
+        # Добавляем тело ответа для случаев, когда редирект не сработает
+        print "Выполняется вход...\n";
+        print '<script>window.location.href="http://localhost:8080/cgi-bin/index.cgi?action=home";</script>';
         
     } else {
         warn "Login failed for user: $login";
-        print $cgi->redirect('/cgi-bin/index.cgi?action=login&error=1');
+        print $cgi->header(
+            -type => 'text/html',
+            -charset => 'utf-8',
+            -status => '302 Found',
+            -location => 'http://localhost:8080/cgi-bin/index.cgi?action=login&error=1'
+        );
+        print "Перенаправление на страницу входа...\n";
+        print '<script>window.location.href="http://localhost:8080/cgi-bin/index.cgi?action=login&error=1";</script>';
     }
 }
 
@@ -413,16 +426,24 @@ sub handle_register {
 
 sub handle_logout {
     # Удаляем cookie и делаем редирект на главную
+    my $cookie = $cgi->cookie(
+        -name => 'user_id',
+        -value => '',
+        -expires => '-1h'
+    );
+
+    # Отправляем все необходимые заголовки
     print $cgi->header(
         -type => 'text/html',
         -charset => 'utf-8',
-        -cookie => $cgi->cookie(
-            -name => 'user_id',
-            -value => '',
-            -expires => '-1h'
-        ),
-        -location => '/cgi-bin/index.cgi?action=home'
+        -cookie => $cookie,
+        -status => '302 Found',
+        -location => 'http://localhost:8080/cgi-bin/index.cgi?action=home'
     );
+    
+    # Добавляем тело ответа для случаев, когда редирект не сработает
+    print "Выполняется выход...\n";
+    print '<script>window.location.href="http://localhost:8080/cgi-bin/index.cgi?action=home";</script>';
 }
 
 sub handle_add_to_cart {
@@ -554,7 +575,14 @@ sub handle_create_event {
 
 sub handle_update_order_status {
     unless ($current_user && ($current_user->{role} eq 'manager' || $current_user->{role} eq 'admin')) {
-        print $cgi->redirect('?action=login');
+        print $cgi->header(
+            -type => 'text/html',
+            -charset => 'utf-8',
+            -status => '302 Found',
+            -location => 'http://localhost:8080/cgi-bin/index.cgi?action=login'
+        );
+        print "Перенаправление на страницу входа...\n";
+        print '<script>window.location.href="http://localhost:8080/cgi-bin/index.cgi?action=login";</script>';
         return;
     }
     
@@ -568,12 +596,26 @@ sub handle_update_order_status {
         $sth->execute($status, $order_id);
     };
     
-    print $cgi->redirect('?action=manager');
+    print $cgi->header(
+        -type => 'text/html',
+        -charset => 'utf-8',
+        -status => '302 Found',
+        -location => 'http://localhost:8080/cgi-bin/index.cgi?action=manager'
+    );
+    print "Перенаправление в панель менеджера...\n";
+    print '<script>window.location.href="http://localhost:8080/cgi-bin/index.cgi?action=manager";</script>';
 }
 
 sub handle_update_user_role {
     unless ($current_user && $current_user->{role} eq 'admin') {
-        print $cgi->redirect('?action=login');
+        print $cgi->header(
+            -type => 'text/html',
+            -charset => 'utf-8',
+            -status => '302 Found',
+            -location => 'http://localhost:8080/cgi-bin/index.cgi?action=login'
+        );
+        print "Перенаправление на страницу входа...\n";
+        print '<script>window.location.href="http://localhost:8080/cgi-bin/index.cgi?action=login";</script>';
         return;
     }
     
@@ -587,7 +629,14 @@ sub handle_update_user_role {
         $sth->execute($role, $user_id);
     };
     
-    print $cgi->redirect('?action=admin');
+    print $cgi->header(
+        -type => 'text/html',
+        -charset => 'utf-8',
+        -status => '302 Found',
+        -location => 'http://localhost:8080/cgi-bin/index.cgi?action=admin'
+    );
+    print "Перенаправление в админ-панель...\n";
+    print '<script>window.location.href="http://localhost:8080/cgi-bin/index.cgi?action=admin";</script>';
 }
 
 sub handle_delete_user {
