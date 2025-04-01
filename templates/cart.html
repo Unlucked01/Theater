@@ -17,16 +17,30 @@
                             <span class="value">[% item.time %]</span>
                         </div>
                         <div class="info-row">
-                            <span class="label">Цена:</span>
-                            <span class="value">[% item.price %] руб.</span>
+                            <span class="label">Зона:</span>
+                            <span class="value">[% item.zone_name %]</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Цена за билет:</span>
+                            <span class="value">[% item.zone_price %] ₽</span>
                         </div>
                         <div class="info-row">
                             <span class="label">Количество:</span>
                             <span class="value">[% item.quantity %]</span>
                         </div>
+                        [% IF item.seat_numbers %]
+                        <div class="info-row">
+                            <span class="label">Места:</span>
+                            <span class="value">[% item.seat_numbers %]</span>
+                        </div>
+                        [% END %]
+                        <div class="info-row total">
+                            <span class="label">Итого:</span>
+                            <span class="value">[% item.total_price %] ₽</span>
+                        </div>
                     </div>
                     <div class="item-actions">
-                        <button onclick="removeFromCart('[% item.event_id %]')" class="btn btn-danger">
+                        <button onclick="removeFromCart('[% item.event_id %]', '[% item.zone_id %]')" class="btn btn-danger">
                             Удалить
                         </button>
                     </div>
@@ -35,6 +49,10 @@
 
             <div class="cart-summary">
                 <h3>Итого билетов: [% cart_items.size %]</h3>
+                <div class="total-amount">
+                    <span class="label">Общая сумма:</span>
+                    <span class="value">[% total_amount %] ₽</span>
+                </div>
                 <button onclick="checkout()" class="btn btn-large">Оформить заказ</button>
             </div>
         </div>
@@ -74,6 +92,32 @@
     flex: 1;
 }
 
+.item-info h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.info-row {
+    display: flex;
+    margin-bottom: 0.5rem;
+}
+
+.info-row.total {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #eee;
+    font-weight: bold;
+}
+
+.label {
+    width: 150px;
+    color: #666;
+}
+
+.value {
+    flex: 1;
+}
+
 .item-actions {
     margin-left: 1rem;
 }
@@ -92,9 +136,22 @@
     border-top: 1px solid #eee;
 }
 
+.total-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 0;
+    padding: 1rem 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
 .btn-large {
     padding: 1rem 2rem;
     font-size: 1.1rem;
+    width: 100%;
 }
 
 .empty-cart {

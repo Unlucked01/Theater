@@ -1,58 +1,152 @@
 [% WRAPPER 'layout.html' %]
+
+<!-- Success notification for event creation -->
+[% IF cgi.param('success') %]
+<div class="notification success">
+    Мероприятие успешно добавлено!
+</div>
+[% END %]
+
 <div class="admin-page">
     <h1>Панель администратора</h1>
 
-    <div class="admin-sections">
-        <div class="section">
-            <h2>Статистика продаж</h2>
-            <div class="stats-container">
-                <div class="stats-card">
-                    <h3>Общее количество заказов</h3>
-                    <p class="stats-number">[% total_orders %]</p>
-                </div>
-                <div class="stats-card">
-                    <h3>Активные заказы</h3>
-                    <p class="stats-number">[% active_orders %]</p>
-                </div>
-                <div class="stats-card">
-                    <h3>Всего мероприятий</h3>
-                    <p class="stats-number">[% total_events %]</p>
+    <div class="admin-tabs">
+        <div class="tab-header">
+            <button class="tab-btn active" data-tab="dashboard">Статистика</button>
+            <button class="tab-btn" data-tab="users">Пользователи</button>
+            <button class="tab-btn" data-tab="add-event">Добавить мероприятие</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="dashboard">
+            <div class="admin-sections">
+                <div class="section">
+                    <h2>Статистика продаж</h2>
+                    <div class="stats-container">
+                        <div class="stats-card">
+                            <h3>Общее количество заказов</h3>
+                            <p class="stats-number">[% total_orders %]</p>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Активные заказы</h3>
+                            <p class="stats-number">[% active_orders %]</p>
+                        </div>
+                        <div class="stats-card">
+                            <h3>Всего мероприятий</h3>
+                            <p class="stats-number">[% total_events %]</p>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>Продажи по мероприятиям</h3>
+                        <div class="sales-chart">
+                            [% FOREACH stat IN event_stats %]
+                                <div class="chart-bar">
+                                    <div class="bar-fill" data-percentage="[% stat.percentage %]"></div>
+                                    <span class="bar-label">[% stat.title %]</span>
+                                    <span class="bar-value">[% stat.sales %]</span>
+                                </div>
+                            [% END %]
+                        </div>
+                    </div>
+
+                    <div class="chart-container detail-chart">
+                        <h3>Детальная статистика продаж</h3>
+                        <canvas id="eventSalesChart"></canvas>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div class="chart-container">
-                <h3>Продажи по мероприятиям</h3>
-                <div class="sales-chart">
-                    [% FOREACH stat IN event_stats %]
-                        <div class="chart-bar">
-                            <div class="bar-fill" style="height: [% stat.percentage %]%"></div>
-                            <span class="bar-label">[% stat.title %]</span>
-                            <span class="bar-value">[% stat.sales %]</span>
+        <!-- Users Tab -->
+        <div class="tab-content" id="users">
+            <div class="section">
+                <h2>Управление пользователями</h2>
+                <div class="users-list">
+                    [% FOREACH user IN users %]
+                        <div class="user-card">
+                            <div class="user-info">
+                                <h3>[% user.login %]</h3>
+                                <p>Роль: [% user.role %]</p>
+                            </div>
+                            <div class="user-actions">
+                                <select onchange="updateUserRole('[% user.id %]', this.value)">
+                                    <option value="user" [% IF user.role == 'user' %]selected[% END %]>Пользователь</option>
+                                    <option value="manager" [% IF user.role == 'manager' %]selected[% END %]>Менеджер</option>
+                                    <option value="admin" [% IF user.role == 'admin' %]selected[% END %]>Администратор</option>
+                                </select>
+                                <button onclick="deleteUser('[% user.id %]')" class="btn btn-danger">Удалить</button>
+                            </div>
                         </div>
                     [% END %]
                 </div>
             </div>
         </div>
 
-        <div class="section">
-            <h2>Управление пользователями</h2>
-            <div class="users-list">
-                [% FOREACH user IN users %]
-                    <div class="user-card">
-                        <div class="user-info">
-                            <h3>[% user.login %]</h3>
-                            <p>Роль: [% user.role %]</p>
+        <!-- Add Event Tab -->
+        <div class="tab-content" id="add-event">
+            <div class="event-form-container">
+                <h2>Добавить мероприятие</h2>
+                
+                [% IF success %]
+                <div class="notification success">
+                    Мероприятие успешно добавлено!
+                </div>
+                [% END %]
+                
+                <form action="?action=add_event" method="post">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="title">Название</label>
+                            <input type="text" id="title" name="title" required>
                         </div>
-                        <div class="user-actions">
-                            <select onchange="updateUserRole('[% user.id %]', this.value)">
-                                <option value="user" [% IF user.role == 'user' %]selected[% END %]>Пользователь</option>
-                                <option value="manager" [% IF user.role == 'manager' %]selected[% END %]>Менеджер</option>
-                                <option value="admin" [% IF user.role == 'admin' %]selected[% END %]>Администратор</option>
-                            </select>
-                            <button onclick="deleteUser('[% user.id %]')" class="btn btn-danger">Удалить</button>
+                        
+                        <div class="form-group">
+                            <label for="performers">Исполнители</label>
+                            <input type="text" id="performers" name="performers">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="venue">Место проведения</label>
+                            <input type="text" id="venue" name="venue" value="Наш театр" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="description">Описание</label>
+                            <textarea id="description" name="description" rows="4"></textarea>
                         </div>
                     </div>
-                [% END %]
+                    
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="date">Дата</label>
+                            <input type="date" id="date" name="date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="time">Время</label>
+                            <input type="time" id="time" name="time" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="price">Цена билета</label>
+                            <input type="number" id="price" name="price" min="0" step="0.01" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="seats">Количество мест</label>
+                            <input type="number" id="seats" name="seats" value="170" readonly>
+                        </div>
+                        
+                        <div class="form-info-message">
+                            <p>В нашем театре фиксированное количество мест: 170</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Добавить мероприятие</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -65,7 +159,7 @@
 
 .admin-sections {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: 1fr;
     gap: 2rem;
 }
 
@@ -98,6 +192,13 @@
 
 .chart-container {
     margin-top: 2rem;
+}
+
+.detail-chart {
+    margin-top: 3rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
 }
 
 .sales-chart {
@@ -149,6 +250,7 @@
     padding: 1rem;
     border: 1px solid #eee;
     border-radius: 4px;
+    background: white;
 }
 
 .user-actions {
@@ -161,10 +263,319 @@
     padding: 0.5rem;
     border: 1px solid #ddd;
     border-radius: 4px;
+    background: white;
+}
+
+/* Tabs styling */
+.admin-tabs {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.tab-header {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+}
+
+.tab-btn {
+    padding: 1rem 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: #666;
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    box-shadow: inset 0 -3px 0 var(--primary-color);
+    background: white;
+}
+
+.tab-btn:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+.tab-content {
+    display: none;
+    padding: 2rem;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Form styling */
+.event-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    width: 100%;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+}
+
+.form-group input[readonly] {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    cursor: pointer;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    transition: background-color 0.2s;
+}
+
+.btn:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.btn-danger {
+    background-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Notification styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 4px;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    animation: slide-in 0.5s ease forwards;
+    max-width: 300px;
+}
+
+.notification.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.notification.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+.notification.slide-out {
+    animation: slide-out 0.5s ease forwards;
+}
+
+@keyframes slide-in {
+    0% { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-out {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(100%); opacity: 0; }
+}
+
+.form-info-message {
+    background-color: #e9ecef;
+    padding: 15px;
+    border-radius: 4px;
+    margin: 10px 0;
+    border-left: 4px solid #6c757d;
+}
+
+.form-info-message p {
+    margin: 5px 0;
+    color: #495057;
+}
+
+.form-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .admin-page {
+        padding: 1rem 0;
+    }
+    
+    .tab-header {
+        flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+    
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
 }
 </style>
 
+<!-- Hidden data for charts -->
+<div id="chart-data" style="display:none;">
+    [% FOREACH stat IN event_stats %]
+    <input type="hidden" class="chart-label" value="[% stat.title | html %]">
+    <input type="hidden" class="chart-value" value="[% stat.sales %]">
+    [% END %]
+</div>
+
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Tab switching functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Check for active_tab param
+    const activeTabId = '[% active_tab %]';
+    if (activeTabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        const tabBtn = document.querySelector(`.tab-btn[data-tab="${activeTabId}"]`);
+        if (tabBtn) {
+            tabBtn.classList.add('active');
+            const tabContent = document.getElementById(activeTabId);
+            if (tabContent) {
+                tabContent.classList.add('active');
+            }
+        }
+    }
+
+    // Handle form submission
+    const eventForm = document.querySelector('form[action="?action=add_event"]');
+    if (eventForm) {
+        eventForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    return response.text();
+                }
+            })
+            .then(html => {
+                if (html) {
+                    window.location.href = '?action=admin&tab=add-event&success=1';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Произошла ошибка при добавлении мероприятия. Пожалуйста, попробуйте снова.');
+            });
+        });
+    }
+
+    // Initialize tooltips
+    if (typeof tippy === 'function') {
+        tippy('.tooltip', {
+            placement: 'top',
+            arrow: true,
+            animation: 'shift-away'
+        });
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            this.classList.add('active');
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+    
+    // Success notification auto-hide
+    const notification = document.querySelector('.notification');
+    if (notification) {
+        setTimeout(function() {
+            notification.classList.add('slide-out');
+            setTimeout(function() {
+                notification.remove();
+            }, 500);
+        }, 3000);
+    }
+    
+    // Initialize chart if there's a sales chart element
+    const chartContainer = document.getElementById('sales-chart');
+    if (chartContainer) {
+        // Get all chart bars and set their height
+        document.querySelectorAll('.chart-bar').forEach(function(bar) {
+            const dataHeight = bar.getAttribute('data-height');
+            if (dataHeight) {
+                bar.style.height = dataHeight + '%';
+            }
+        });
+    }
+});
+
+// User management functions
 function updateUserRole(userId, newRole) {
     if (confirm('Вы уверены, что хотите изменить роль пользователя?')) {
         const form = document.createElement('form');
@@ -216,5 +627,74 @@ function deleteUser(userId) {
         form.submit();
     }
 }
+
+// Event management
+document.addEventListener('DOMContentLoaded', function() {
+    // Set heights for bar charts
+    document.querySelectorAll('.bar-fill').forEach(bar => {
+        const percentage = bar.getAttribute('data-percentage');
+        if (percentage) {
+            bar.style.height = percentage + '%';
+        }
+    });
+    
+    // Extract data from hidden inputs
+    const labels = [];
+    const data = [];
+    
+    document.querySelectorAll('.chart-label').forEach(element => {
+        labels.push(element.value);
+    });
+    
+    document.querySelectorAll('.chart-value').forEach(element => {
+        data.push(parseInt(element.value, 10));
+    });
+    
+    // Initialize sales chart
+    const ctx = document.getElementById('eventSalesChart').getContext('2d');
+    const eventSalesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Продано билетов',
+                data: data,
+                backgroundColor: 'rgba(66, 133, 244, 0.6)',
+                borderColor: 'rgba(66, 133, 244, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Продажи билетов по мероприятиям'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+
+// Auto-hide notification
+document.addEventListener('DOMContentLoaded', function() {
+    const notification = document.querySelector('.notification');
+    if (notification) {
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-out forwards';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
+    }
+});
 </script>
 [% END %] 

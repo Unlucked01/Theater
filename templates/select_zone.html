@@ -1,0 +1,1487 @@
+[% WRAPPER 'layout.html' %]
+<div class="select-zone-page">
+    <h1>Выбор зоны для мероприятия</h1>
+    
+    <!-- Hidden data elements for JavaScript -->
+    [% FOREACH zone IN zones %]
+    <div class="zone-data" 
+         data-id="[% zone.id %]" 
+         data-name="[% zone.name %]" 
+         data-price="[% zone.price %]" 
+         data-available-seats="[% zone.available_seats %]" 
+         data-description="[% zone.description %]" 
+         style="display: none;"></div>
+    [% END %]
+    <div id="quantity-value" style="display: none;">[% quantity %]</div>
+    
+    <div class="event-details">
+        <h2>[% event.title %]</h2>
+        <div class="info-row">
+            <span class="label">Дата:</span>
+            <span class="value">[% event.date %]</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Время:</span>
+            <span class="value">[% event.time %]</span>
+        </div>
+        <div class="info-row">
+            <span class="label">Количество билетов:</span>
+            <span class="value">[% quantity %]</span>
+        </div>
+    </div>
+    
+    <div class="stage-container">
+        <div class="stage">СЦЕНА</div>
+    </div>
+    
+    [% IF zones.size %]
+        <div class="theater-layout">
+            <div class="zones-legend">
+                [% FOREACH zone IN zones %]
+                    <div class="zone-legend-item" data-zone-id="[% zone.id %]">
+                        <div class="color-square"></div>
+                        <div class="zone-info">
+                            <div class="zone-name">[% zone.name %]</div>
+                            <div class="zone-price">[% zone.price %] руб.</div>
+                        </div>
+                    </div>
+                [% END %]
+                <div class="zone-legend-item reserved">
+                    <div class="color-square"></div>
+                    <div class="zone-info">
+                        <div class="zone-name">Забронировано</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="seating-grid">
+                <!-- Stage indicator -->
+                <div class="seating-label">Сцена</div>
+                
+                <div class="parterre-section">
+                    <!-- First 4 rows as Parterre (zone_id = 1) -->
+                    [% FOR row IN [1..4] %]
+                        <div class="seat-row">
+                            <div class="row-label">[% row %]</div>
+                            [% FOR seat IN [1..16] %]
+                                [% seat_number = (row - 1) * 16 + seat %]
+                                [% zone_id = 1 %] <!-- Parterre zone -->
+                                [% reserved = 0 %]
+                                [% IF reserved_seats_by_zone.$zone_id.exists("$seat_number") %]
+                                    [% reserved = 1 %]
+                                [% END %]
+                                
+                                <div class="seat-wrapper premium parterre-seat" data-seat="[% seat_number %]" data-zone-id="[% zone_id %]" data-reserved="[% reserved %]">
+                                    <div class="seat-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </div>
+                                    <div class="seat-number">[% seat_number %]</div>
+                                </div>
+                            [% END %]
+                        </div>
+                    [% END %]
+                </div>
+                
+                <!-- Zone divider -->
+                <div class="zone-divider"></div>
+                
+                <div class="amphitheater-section">
+                    <!-- The main trapezoid part of the amphitheater (zone_id = 2) -->
+                    <div class="trapezoid-container">
+                        [% FOR row IN [5..8] %]
+                            <div class="seat-row">
+                                <div class="row-label">[% row %]</div>
+                                [% row_seats = 14 - (row - 5) * 2 %]
+                                [% FOR seat IN [1..row_seats] %]
+                                    [% seat_number = 64 + (row - 5) * 14 + seat %]
+                                    [% zone_id = 2 %] <!-- Amphitheater zone -->
+                                    [% reserved = 0 %]
+                                    [% IF reserved_seats_by_zone.$zone_id.exists("$seat_number") %]
+                                        [% reserved = 1 %]
+                                    [% END %]
+                                    
+                                    <div class="seat-wrapper central amphitheater-seat" data-seat="[% seat_number %]" data-zone-id="[% zone_id %]" data-reserved="[% reserved %]">
+                                        <div class="seat-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                        </div>
+                                        <div class="seat-number">[% seat_number %]</div>
+                                    </div>
+                                [% END %]
+                            </div>
+                        [% END %]
+                    </div>
+                    
+                    <!-- Balcony side sections (staircase/triangular layout - reversed direction) -->
+                    <div class="balcony-triangle-container left">
+                        [% FOR row IN [1..4] %]
+                            <div class="balcony-row">
+                                [% steps = 5 - row %] <!-- Reversed to have more seats at the bottom -->
+                                [% FOR step IN [1..steps] %]
+                                    [% seat_number = 114 + (row - 1) * 4 + step %]
+                                    [% zone_id = 4 %] <!-- Balcony zone - left side (stairs) -->
+                                    [% reserved = 0 %]
+                                    [% IF reserved_seats_by_zone.$zone_id.exists("$seat_number") %]
+                                        [% reserved = 1 %]
+                                    [% END %]
+                                    
+                                    <div class="seat-wrapper triangle-seat balcony-seat" data-seat="[% seat_number %]" data-zone-id="[% zone_id %]" data-reserved="[% reserved %]">
+                                        <div class="seat-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                        </div>
+                                        <div class="seat-number">[% seat_number %]</div>
+                                    </div>
+                                [% END %]
+                            </div>
+                        [% END %]
+                    </div>
+                    
+                    <div class="balcony-triangle-container right">
+                        [% FOR row IN [1..4] %]
+                            <div class="balcony-row">
+                                [% steps = 5 - row %] <!-- Reversed to have more seats at the bottom -->
+                                [% FOR step IN [1..steps] %]
+                                    [% seat_number = 127 + (row - 1) * 4 + step %]
+                                    [% zone_id = 4 %] <!-- Balcony zone - right side (stairs) -->
+                                    [% reserved = 0 %]
+                                    [% IF reserved_seats_by_zone.$zone_id.exists("$seat_number") %]
+                                        [% reserved = 1 %]
+                                    [% END %]
+                                    
+                                    <div class="seat-wrapper triangle-seat balcony-seat" data-seat="[% seat_number %]" data-zone-id="[% zone_id %]" data-reserved="[% reserved %]">
+                                        <div class="seat-icon">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                        </div>
+                                        <div class="seat-number">[% seat_number %]</div>
+                                    </div>
+                                [% END %]
+                            </div>
+                        [% END %]
+                    </div>
+                </div>
+                
+                <!-- Zone divider -->
+                <div class="zone-divider"></div>
+                
+                <!-- Mezzanine section (rectangle behind amphitheater) -->
+                <div class="section-label">Бельэтаж</div>
+                <div class="mezzanine-section">
+                    [% FOR row IN [9..10] %]
+                        <div class="seat-row">
+                            <div class="row-label">[% row %]</div>
+                            [% FOR seat IN [1..14] %]
+                                [% seat_number = 140 + (row - 9) * 14 + seat %]
+                                [% zone_id = 3 %] <!-- Mezzanine zone -->
+                                [% reserved = 0 %]
+                                [% IF reserved_seats_by_zone.$zone_id.exists("$seat_number") %]
+                                    [% reserved = 1 %]
+                                [% END %]
+                                
+                                <div class="seat-wrapper mezzanine-seat" data-seat="[% seat_number %]" data-zone-id="[% zone_id %]" data-reserved="[% reserved %]">
+                                    <div class="seat-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                        </svg>
+                                    </div>
+                                    <div class="seat-number">[% seat_number %]</div>
+                                </div>
+                            [% END %]
+                        </div>
+                    [% END %]
+                </div>
+                
+                <!-- Back indicator -->
+                <div class="seating-label">Вход в зал</div>
+            </div>
+        </div>
+        
+        <div class="selected-zone-info">
+            <h3>Выбранные места: <span id="selected-count">0</span>/<span id="required-count">[% quantity %]</span></h3>
+            <div id="selected-zone-details">
+                <div class="seat-legend">
+                    <div class="legend-item">
+                        <div class="seat-icon available">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <span>Доступно</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat-icon selected">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <span>Выбрано</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="seat-icon reserved">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <span>Занято</span>
+                    </div>
+                </div>
+                
+                <!-- Display selected seats -->
+                <div class="selected-seats-info">
+                    <div id="selected-seats-list" class="selected-seats-list"></div>
+                </div>
+                
+                <div class="info-row">
+                    <span class="label">Зона:</span>
+                    <span class="value" id="selected-zone-name">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Цена за билет:</span>
+                    <span class="value" id="selected-zone-price">-</span>
+                </div>
+                <div class="info-row total">
+                    <span class="label">Итого:</span>
+                    <span class="value" id="selected-zone-total">-</span>
+                </div>
+                
+                <button id="add-to-cart-button" class="btn select-btn" disabled>
+                    <svg class="ticket-icon" viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M22 10V6c0-1.1-.9-2-2-2H4c-1.1 0-1.99.9-1.99 2v4c1.1 0 1.99.9 1.99 2s-.89 2-2 2v4c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-4c-1.1 0-2-.9-2-2s.9-2 2-2zm-2-1.46c-1.19.69-2 1.99-2 3.46s.81 2.77 2 3.46V18H4v-2.54c1.19-.69 2-1.99 2-3.46 0-1.48-.8-2.77-1.99-3.46L4 6h16v2.54z"/>
+                        <path d="M9.07 16L12 14.12 14.93 16l-.89-3.36 2.69-2.2-3.47-.21L12 7l-1.27 3.22-3.47.21 2.69 2.2z"/>
+                    </svg>
+                    Добавить в корзину
+                </button>
+            </div>
+        </div>
+    [% ELSE %]
+        <div class="no-zones">
+            <p>К сожалению, нет доступных зон с достаточным количеством мест.</p>
+            <a href="?action=events" class="btn">Вернуться к мероприятиям</a>
+        </div>
+    [% END %]
+</div>
+
+<style>
+:root {
+    --zone-color-0: #4285F4;
+    --zone-color-1: #34A853;
+    --zone-color-2: #FBBC05;
+    --zone-color-3: #EA4335;
+    --zone-color-4: #8E44AD;
+    --zone-color-5: #3498DB;
+    --zone-color-6: #16A085;
+    --zone-color-7: #F39C12;
+    --reserved-color: #95A5A6;
+}
+
+.select-zone-page {
+    padding: 2rem 0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.event-details {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.stage-container {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.stage {
+    background: #333;
+    color: white;
+    padding: 1rem 0;
+    font-weight: bold;
+    width: 80%;
+    max-width: 800px;
+    margin: 0 auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.stage:after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 15px solid #333;
+}
+
+.theater-layout {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.zones-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+}
+
+.zone-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    background: #f8f9fa;
+}
+
+.color-square {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.zone-legend-item.reserved .color-square {
+    background-color: var(--reserved-color);
+}
+
+.zone-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.zone-name {
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.zone-price {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.seating-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.seat-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+}
+
+/* Remove the rotation/curvature effects */
+.seat-row:nth-child(3), 
+.seat-row:nth-child(4),
+.seat-row:nth-child(5), 
+.seat-row:nth-child(6),
+.seat-row:nth-child(7), 
+.seat-row:nth-child(8),
+.seat-row:nth-child(9), 
+.seat-row:nth-child(10) {
+    transform: none;
+}
+
+/* Remove width variations */
+.seat-row:nth-child(3),
+.seat-row:nth-child(4),
+.seat-row:nth-child(5),
+.seat-row:nth-child(6),
+.seat-row:nth-child(7),
+.seat-row:nth-child(8),
+.seat-row:nth-child(9),
+.seat-row:nth-child(10) {
+    width: auto;
+}
+
+.seat-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    margin: 0 1px;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transform: scale(0.9);
+}
+
+.seat-wrapper:not([data-reserved="1"]):hover {
+    transform: translateY(-5px);
+    background-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.seat-wrapper.selected {
+    background-color: rgba(52, 168, 83, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.seat-wrapper.selected::after {
+    content: '✓';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background: #2ecc71;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* Zone styling */
+.seat-wrapper.premium .seat-icon {
+    color: var(--zone-color-0);
+}
+
+.seat-wrapper.central .seat-icon {
+    color: var(--zone-color-1);
+}
+
+.seat-wrapper.side.left .seat-icon,
+.seat-wrapper.side.right .seat-icon {
+    color: var(--zone-color-2);
+}
+
+.seat-wrapper.back .seat-icon {
+    color: var(--zone-color-3);
+}
+
+/* Number styling by zone */
+.seat-wrapper.premium .seat-number {
+    color: var(--zone-color-0);
+}
+
+.seat-wrapper.central .seat-number {
+    color: var(--zone-color-1);
+}
+
+.seat-wrapper.side.left .seat-number,
+.seat-wrapper.side.right .seat-number {
+    color: var(--zone-color-2);
+}
+
+.seat-wrapper.back .seat-number {
+    color: var(--zone-color-3);
+}
+
+.seat-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.seat-number {
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.seat-wrapper.selected::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 12px;
+    height: 12px;
+    background: #2ecc71;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.zone-divider {
+    height: 1px;
+    width: 90%;
+    background: rgba(0,0,0,0.1);
+    margin: 10px 0;
+    position: relative;
+}
+
+.center-gap {
+    width: 60px;
+    height: 30px;
+    position: relative;
+}
+
+.center-gap::after {
+    content: 'Проход';
+    position: absolute;
+    font-size: 12px;
+    color: #777;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+}
+
+.seating-label {
+    color: #666;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 8px 0;
+    text-align: center;
+}
+
+.selected-zone-info {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 2rem;
+}
+
+.selected-zone-info h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+    text-align: center;
+}
+
+.zone-description {
+    color: #666;
+    font-style: italic;
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.7rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.label {
+    color: #666;
+}
+
+.value {
+    font-weight: bold;
+}
+
+.info-row.total {
+    background: #f0f8ff;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+}
+
+.select-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #4285F4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+
+.select-btn:hover:not(:disabled) {
+    background-color: #2b6bc7;
+}
+
+.select-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.ticket-icon {
+    fill: currentColor;
+}
+
+.no-zones {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    margin-top: 2rem;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.notification.success {
+    background-color: #34A853;
+}
+
+.notification.error {
+    background-color: #EA4335;
+}
+
+.hidden {
+    display: none;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Add these styles */
+.seat-selection-container {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.seat-selection-container.hidden {
+    display: none;
+}
+
+.seat-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.seat-icon.available {
+    color: var(--primary-color);
+}
+
+.seat-icon.selected {
+    color: var(--selected-color);
+}
+
+.seat-icon.reserved {
+    color: var(--reserved-color);
+}
+
+.seating-grid-mini {
+    display: flex;
+    justify-content: center;
+    background: #f0f0f0;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#seats-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    max-width: 600px;
+}
+
+.seat-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.25rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    margin: 0.25rem;
+}
+
+.seat-mini:hover:not(.reserved) {
+    transform: translateY(-3px);
+    background: #e9e9e9;
+}
+
+.seat-mini.selected {
+    background: rgba(52, 168, 83, 0.2);
+}
+
+.seat-mini.reserved {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.seat-mini .seat-number {
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.selected-seats-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    min-height: 40px;
+    justify-content: center;
+}
+
+.selected-seat-item {
+    padding: 0.5rem 1rem;
+    background: #f1f1f1;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.remove-seat {
+    cursor: pointer;
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+:root {
+    --primary-color: #4285F4;
+    --selected-color: #34A853;
+    --reserved-color: #95A5A6;
+}
+
+.row-label {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #555;
+    background: #e9ecef;
+    border-radius: 50%;
+}
+
+.seat-wrapper[data-reserved="1"] {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background-color: rgba(149, 165, 166, 0.3);
+}
+
+.seat-wrapper[data-reserved="1"] .seat-icon {
+    color: var(--reserved-color);
+}
+
+.seat-wrapper[data-reserved="1"] .seat-number {
+    color: var(--reserved-color);
+}
+
+.selected-zone-info {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-top: 2rem;
+}
+
+.selected-zone-info h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+    text-align: center;
+}
+
+.seat-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.selected-seats-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    min-height: 40px;
+    justify-content: center;
+}
+
+.seat-icon.available {
+    color: var(--primary-color);
+}
+
+.seat-icon.selected {
+    color: var(--selected-color);
+}
+
+.seat-icon.reserved {
+    color: var(--reserved-color);
+}
+
+.seat-number {
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.selected-seat-item {
+    padding: 0.5rem 1rem;
+    background: #f1f1f1;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.remove-seat {
+    cursor: pointer;
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Add these new layout styles */
+.parterre-section {
+    margin-bottom: 2rem;
+}
+
+.amphitheater-section {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.trapezoid-container {
+    position: relative;
+    margin: 0 auto;
+    width: 90%;
+}
+
+.trapezoid-edge {
+    position: absolute;
+    top: 0;
+    width: 80px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.trapezoid-edge.left {
+    left: -80px;
+}
+
+.trapezoid-edge.right {
+    right: -80px;
+}
+
+.section-label {
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #e9ecef;
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* Style for different sections */
+.parterre-seat {
+    background-color: rgba(66, 133, 244, 0.05);
+}
+
+.amphitheater-seat {
+    background-color: rgba(52, 168, 83, 0.05);
+}
+
+.mezzanine-seat {
+    background-color: rgba(234, 67, 53, 0.05);
+}
+
+.balcony-seat {
+    background-color: rgba(251, 188, 5, 0.05);
+}
+
+/* Add these new CSS styles for the layout */
+.mezzanine-section {
+    margin-bottom: 2rem;
+}
+
+.balcony-triangle-container {
+    position: absolute;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 120px;
+}
+
+.balcony-triangle-container.left {
+    left: -120px;
+    align-items: flex-end;
+}
+
+.balcony-triangle-container.right {
+    right: -120px;
+    align-items: flex-start;
+}
+
+.balcony-row {
+    display: flex;
+    height: 25%;
+}
+
+.triangle-seat {
+    transform: scale(0.8);
+}
+
+/* Add styles for zone icons */
+.seat-wrapper.premium .seat-icon {
+    color: var(--zone-color-0); /* Партер */
+}
+
+.seat-wrapper.central .seat-icon,
+.seat-wrapper.amphitheater-seat .seat-icon {
+    color: var(--zone-color-1); /* Амфитеатр */
+}
+
+.seat-wrapper.mezzanine-seat .seat-icon {
+    color: var(--zone-color-3); /* Бельэтаж */
+}
+
+.seat-wrapper.balcony-seat .seat-icon {
+    color: var(--zone-color-2); /* Балкон */
+}
+
+/* Number styling by zone */
+.seat-wrapper.premium .seat-number {
+    color: var(--zone-color-0);
+}
+
+.seat-wrapper.central .seat-number,
+.seat-wrapper.amphitheater-seat .seat-number {
+    color: var(--zone-color-1);
+}
+
+.seat-wrapper.mezzanine-seat .seat-number {
+    color: var(--zone-color-3);
+}
+
+.seat-wrapper.balcony-seat .seat-number {
+    color: var(--zone-color-2);
+}
+
+/* Style for making icons smaller */
+.seat-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.seat-wrapper {
+    transform: scale(0.9);
+    margin: 0;
+}
+
+.triangle-seat {
+    transform: scale(0.8);
+}
+</style>
+
+<script>
+// Define zone colors in JavaScript to match CSS
+const zoneColors = [
+    '#4285F4', // Blue
+    '#34A853', // Green
+    '#FBBC05', // Yellow
+    '#EA4335', // Red
+    '#8E44AD', // Purple
+    '#3498DB', // Light Blue
+    '#16A085', // Teal
+    '#F39C12'  // Orange
+];
+
+// Collect zones data from data attributes
+const zonesData = [];
+document.querySelectorAll('.zone-data').forEach(element => {
+    zonesData.push({
+        id: parseInt(element.getAttribute('data-id'), 10),
+        name: element.getAttribute('data-name'),
+        price: parseFloat(element.getAttribute('data-price')),
+        availableSeats: parseInt(element.getAttribute('data-available-seats'), 10),
+        description: element.getAttribute('data-description')
+    });
+});
+
+let selectedZoneId = null;
+const quantity = parseInt(document.getElementById('quantity-value').textContent, 10);
+
+function updateSelectedZoneInfo(zoneId) {
+    const selectedZoneNameEl = document.getElementById('selected-zone-name');
+    const selectedZoneDetailsEl = document.getElementById('selected-zone-details');
+    const selectButton = document.getElementById('select-zone-button');
+    
+    if (zoneId === null) {
+        selectedZoneNameEl.textContent = 'Не выбрана';
+        selectedZoneDetailsEl.classList.add('hidden');
+        selectButton.disabled = true;
+        return;
+    }
+    
+    const zone = zonesData.find(z => z.id === zoneId);
+    if (!zone) return;
+    
+    selectedZoneNameEl.textContent = zone.name;
+    document.getElementById('selected-zone-description').textContent = zone.description;
+    document.getElementById('selected-zone-price').textContent = `${zone.price} руб.`;
+    document.getElementById('selected-zone-seats').textContent = zone.availableSeats;
+    document.getElementById('selected-zone-total').textContent = `${(zone.price * quantity)} руб.`;
+    
+    selectedZoneDetailsEl.classList.remove('hidden');
+    selectButton.disabled = false;
+    
+    // Update button to show seat selection instead of redirecting
+    selectButton.onclick = () => showSeatSelection(zoneId, zone.name);
+    
+    // Set the button color to match the zone
+    const zoneIndex = zonesData.findIndex(z => z.id === zoneId);
+    const colorIndex = zoneIndex % zoneColors.length;
+    selectButton.style.backgroundColor = zoneColors[colorIndex];
+}
+
+function showSeatSelection(zoneId, zoneName) {
+    // Hide the select button and show the seat selection container
+    document.getElementById('select-zone-button').classList.add('hidden');
+    document.getElementById('add-to-cart-button').classList.remove('hidden');
+    
+    const seatSelectionContainer = document.getElementById('seat-selection-container');
+    seatSelectionContainer.classList.remove('hidden');
+    
+    document.getElementById('seat-selection-zone-name').textContent = zoneName;
+    
+    // Generate seats for this zone
+    generateSeats(zoneId);
+}
+
+function generateSeats(zoneId) {
+    const seatsContainer = document.getElementById('seats-container');
+    seatsContainer.innerHTML = '';
+    
+    // Determine number of rows and seats based on the zone
+    const totalSeats = zonesData.find(z => z.id === zoneId).availableSeats;
+    const rows = Math.ceil(totalSeats / 10);
+    const seatsPerRow = Math.min(10, totalSeats);
+    
+    // For simplicity, in this mockup we'll use every 7th seat as reserved
+    // In a real implementation, we would get the data from the server
+    for (let i = 1; i <= totalSeats; i++) {
+        const seat = document.createElement('div');
+        seat.className = 'seat-mini';
+        seat.dataset.seatNumber = i;
+        
+        // Randomly mark some seats as reserved (for demonstration)
+        // In a real implementation, this would check against server data
+        const isReserved = i % 7 === 0; // Every 7th seat is reserved
+        if (isReserved) {
+            seat.classList.add('reserved');
+            seat.dataset.reserved = '1';
+        } else {
+            seat.dataset.reserved = '0';
+        }
+        
+        const seatIcon = document.createElement('div');
+        seatIcon.className = 'seat-icon';
+        seatIcon.innerHTML = 
+        `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+        </svg>`;
+        
+        if (isReserved) {
+            seatIcon.classList.add('reserved');
+        } else {
+            seatIcon.classList.add('available');
+        }
+        
+        const seatNumber = document.createElement('div');
+        seatNumber.className = 'seat-number';
+        seatNumber.textContent = i;
+        
+        seat.appendChild(seatIcon);
+        seat.appendChild(seatNumber);
+        
+        // Add click handler for seat selection
+        if (!isReserved) {
+            seat.addEventListener('click', function() {
+                const seatNum = parseInt(this.dataset.seatNumber);
+                
+                if (this.classList.contains('selected')) {
+                    deselectSeat(seatNum);
+                } else {
+                    selectSeat(seatNum);
+                }
+            });
+        }
+        
+        seatsContainer.appendChild(seat);
+    }
+}
+
+function selectSeat(seatNumber) {
+    // Don't select if we already have enough seats
+    if (selectedSeats.size >= requiredSeats) {
+        showNotification('Уже выбрано максимальное количество мест', 'error');
+        return;
+    }
+    
+    selectedSeats.add(seatNumber);
+    
+    // Mark seat as selected in the UI
+    const seatElement = document.querySelector(`.seat-mini[data-seat-number="${seatNumber}"]`);
+    seatElement.classList.add('selected');
+    seatElement.querySelector('.seat-icon').classList.remove('available');
+    seatElement.querySelector('.seat-icon').classList.add('selected');
+    
+    updateSelectedSeatsInfo();
+}
+
+function deselectSeat(seatNumber) {
+    selectedSeats.delete(seatNumber);
+    
+    // Mark seat as available in the UI
+    const seatElement = document.querySelector(`.seat-mini[data-seat-number="${seatNumber}"]`);
+    seatElement.classList.remove('selected');
+    seatElement.querySelector('.seat-icon').classList.remove('selected');
+    seatElement.querySelector('.seat-icon').classList.add('available');
+    
+    updateSelectedSeatsInfo();
+}
+
+function updateSelectedSeatsInfo() {
+    const selectedCount = selectedSeats.size;
+    document.getElementById('selected-count').textContent = selectedCount;
+    
+    const selectedSeatsList = document.getElementById('selected-seats-list');
+    selectedSeatsList.innerHTML = '';
+    
+    // Sort the selected seats by number for display
+    const sortedSeats = Array.from(selectedSeats).sort((a, b) => a - b);
+    
+    sortedSeats.forEach(seatNumber => {
+        const seatItem = document.createElement('div');
+        seatItem.className = 'selected-seat-item';
+        seatItem.innerHTML = `
+            <span>Место ${seatNumber}</span>
+            <span class="remove-seat" data-seat="${seatNumber}">×</span>
+        `;
+        selectedSeatsList.appendChild(seatItem);
+        
+        // Add event listener to remove button
+        seatItem.querySelector('.remove-seat').addEventListener('click', function() {
+            const seatNum = parseInt(this.getAttribute('data-seat'));
+            
+            // Unselect the seat in the main layout
+            const seatEl = document.querySelector(`.seat-wrapper[data-seat="${seatNum}"]`);
+            if (seatEl) {
+                seatEl.classList.remove('selected');
+            }
+            
+            selectedSeats.delete(seatNum);
+            updateSelectedSeatsInfo();
+        });
+    });
+    
+    // Update add to cart button state
+    const addToCartButton = document.getElementById('add-to-cart-button');
+    addToCartButton.disabled = selectedCount !== requiredSeats;
+    
+    // Update total price
+    updateTotalPrice();
+}
+
+function showNotification(message, type = 'success') {
+    // Check if a notification already exists and remove it
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Define zone names for display (matching our layout)
+    const zoneNames = {
+        1: "Партер",
+        2: "Амфитеатр",
+        3: "Бельэтаж",
+        4: "Балкон"
+    };
+    
+    const selectedSeats = new Set();
+    const requiredSeats = parseInt(document.getElementById('required-count').textContent, 10);
+    let currentZoneId = null;
+    let currentZoneName = '';
+    let currentZonePrice = 0;
+    
+    // Fix the notification function to handle encoding properly
+    function showNotification(message, type = 'success') {
+        // Check if a notification already exists and remove it
+        const existingNotification = document.querySelector('.notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    
+    function updateTotalPrice() {
+        const total = selectedSeats.size * currentZonePrice;
+        document.getElementById('selected-zone-total').textContent = `${total} руб.`;
+    }
+    
+    function updateSelectedSeatsInfo() {
+        const selectedCount = selectedSeats.size;
+        document.getElementById('selected-count').textContent = selectedCount;
+        
+        const selectedSeatsList = document.getElementById('selected-seats-list');
+        selectedSeatsList.innerHTML = '';
+        
+        // Sort the selected seats by number for display
+        const sortedSeats = Array.from(selectedSeats).sort((a, b) => a - b);
+        
+        sortedSeats.forEach(seatNumber => {
+            const seatItem = document.createElement('div');
+            seatItem.className = 'selected-seat-item';
+            seatItem.innerHTML = `
+                <span>Место ${seatNumber}</span>
+                <span class="remove-seat" data-seat="${seatNumber}">×</span>
+            `;
+            selectedSeatsList.appendChild(seatItem);
+            
+            // Add event listener to remove button
+            seatItem.querySelector('.remove-seat').addEventListener('click', function() {
+                const seatNum = parseInt(this.getAttribute('data-seat'));
+                
+                // Unselect the seat in the main layout
+                const seatEl = document.querySelector(`.seat-wrapper[data-seat="${seatNum}"]`);
+                if (seatEl) {
+                    seatEl.classList.remove('selected');
+                }
+                
+                selectedSeats.delete(seatNum);
+                updateSelectedSeatsInfo();
+            });
+        });
+        
+        // Update add to cart button state
+        const addToCartButton = document.getElementById('add-to-cart-button');
+        addToCartButton.disabled = selectedCount !== requiredSeats;
+        
+        // Update total price
+        updateTotalPrice();
+    }
+    
+    function updateZoneInfo() {
+        document.getElementById('selected-zone-name').textContent = currentZoneName;
+        document.getElementById('selected-zone-price').textContent = `${currentZonePrice} руб.`;
+        updateTotalPrice();
+    }
+    
+    // Set colors for zone legend items
+    document.querySelectorAll('.zone-legend-item:not(.reserved)').forEach((item) => {
+        const zoneId = parseInt(item.getAttribute('data-zone-id'), 10);
+        // Match zone colors with our CSS
+        const colorIndex = (zoneId - 1) % zoneColors.length;
+        item.querySelector('.color-square').style.backgroundColor = zoneColors[colorIndex];
+        
+        // Update zone names in legend to match our layout
+        if (zoneId >= 1 && zoneId <= 5) {
+            const zoneName = item.querySelector('.zone-name');
+            if (zoneName && zoneNames[zoneId]) {
+                zoneName.textContent = zoneNames[zoneId];
+            }
+        }
+    });
+    
+    // Add click event to select seat
+    document.querySelectorAll('.seat-wrapper').forEach(seat => {
+        const zoneId = parseInt(seat.getAttribute('data-zone-id'), 10);
+        const seatNumber = parseInt(seat.getAttribute('data-seat'), 10);
+        const isReserved = seat.getAttribute('data-reserved') === '1';
+        
+        if (!isReserved) {
+            seat.addEventListener('click', function() {
+                // Update current zone info if needed
+                if (currentZoneId !== zoneId) {
+                    currentZoneId = zoneId;
+                    const zone = zonesData.find(z => z.id === zoneId);
+                    if (zone) {
+                        currentZoneName = zone.name;
+                        currentZonePrice = zone.price;
+                    } else {
+                        // Fallback if zone not found in zonesData
+                        currentZoneName = zoneNames[zoneId] || 'Зона ' + zoneId;
+                        currentZonePrice = 0; // You might want to set a default price
+                    }
+                    updateZoneInfo();
+                }
+                
+                // Toggle seat selection
+                if (this.classList.contains('selected')) {
+                    this.classList.remove('selected');
+                    selectedSeats.delete(seatNumber);
+                } else {
+                    // Prevent selecting more than required seats
+                    if (selectedSeats.size >= requiredSeats) {
+                        showNotification(`Максимум выбранных мест: ${requiredSeats}. Снимите выбор с другого места.`, 'error');
+                        return;
+                    }
+                    
+                    this.classList.add('selected');
+                    selectedSeats.add(seatNumber);
+                }
+                
+                updateSelectedSeatsInfo();
+            });
+        }
+    });
+    
+    // Add to cart button handler
+    document.getElementById('add-to-cart-button').addEventListener('click', function() {
+        if (selectedSeats.size !== requiredSeats) {
+            showNotification(`Пожалуйста, выберите ${requiredSeats} мест`, 'error');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('action', 'add_to_cart');
+        formData.append('event_id', '[% event.id %]');
+        formData.append('quantity', requiredSeats);
+        formData.append('zone_id', currentZoneId);
+        formData.append('seat_numbers', Array.from(selectedSeats).join(','));
+        
+        fetch('/cgi-bin/index.cgi', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Fix encoding by decoding UTF-8 characters before displaying
+                let message = data.message;
+                try {
+                    // Handle potential already decoded messages
+                    message = decodeURIComponent(escape(message));
+                } catch (e) {
+                    // If error in decoding, use original message
+                    console.log("Message already decoded");
+                }
+                showNotification(message);
+                setTimeout(() => {
+                    window.location.href = '/cgi-bin/index.cgi?action=cart';
+                }, 1500);
+            } else {
+                let errorMsg = data.error || 'Произошла ошибка при добавлении в корзину';
+                try {
+                    // Handle potential already decoded messages
+                    errorMsg = decodeURIComponent(escape(errorMsg));
+                } catch (e) {
+                    // If error in decoding, use original message
+                    console.log("Error message already decoded");
+                }
+                showNotification(errorMsg, 'error');
+                console.error('Debug info:', data.debug);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Произошла ошибка при отправке запроса', 'error');
+        });
+    });
+});
+</script>
+[% END %] 

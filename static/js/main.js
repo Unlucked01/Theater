@@ -1,41 +1,114 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Функция для добавления билета в корзину
-    window.addToCart = function(eventId, quantity = 1) {
-        const formData = new URLSearchParams();
+    window.addToCart = function(eventId, quantity, zoneId) {
+        // Validate inputs
+        if (!eventId || !quantity) {
+            showError('Ошибка: отсутствуют обязательные параметры');
+            return;
+        }
+
+        // Create form data
+        const formData = new FormData();
         formData.append('action', 'add_to_cart');
         formData.append('event_id', eventId);
         formData.append('quantity', quantity);
+        
+        // If zoneId is provided, add it to form data
+        if (zoneId) {
+            formData.append('zone_id', zoneId);
+        } else {
+            // If no zoneId, redirect to zone selection page
+            window.location.href = `/cgi-bin/index.cgi?action=select_zone&event_id=${eventId}&quantity=${quantity}`;
+            return;
+        }
 
+        // Send request
         fetch('/cgi-bin/index.cgi', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'Accept': 'application/json; charset=UTF-8'
-            },
-            body: formData.toString()
+            body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
-                //alert(data.message);
-                window.location.href = '/cgi-bin/index.cgi?action=cart';
+                showSuccess(data.message);
+                // Update cart count if needed
+                updateCartCount();
             } else {
-                if (data.error === 'Необходима авторизация') {
-                    window.location.href = '/cgi-bin/index.cgi?action=login';
-                } else {
-                    alert(data.error || 'Произошла ошибка при добавлении в корзину');
+                showError(data.error || 'Произошла ошибка при добавлении в корзину');
+                if (data.debug) {
+                    console.error('Debug info:', data.debug);
                 }
             }
         })
         .catch(error => {
-            alert('Произошла ошибка при добавлении в корзину');
+            console.error('Error:', error);
+            showError('Произошла ошибка при отправке запроса');
         });
-    };
+    }
+
+    function showSuccess(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification success';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    function showError(message) {
+        const notification = document.createElement('div');
+        notification.className = 'notification error';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    function updateCartCount() {
+        // This function can be implemented to update the cart count in the header
+        // For now, we'll just refresh the page to show the updated cart
+        window.location.reload();
+    }
+
+    // Add styles for notifications
+    const style = document.createElement('style');
+    style.textContent = `
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification.success {
+            background-color: #28a745;
+        }
+        
+        .notification.error {
+            background-color: #dc3545;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 
     // Функция для удаления билета из корзины
     window.removeFromCart = function(eventId) {
