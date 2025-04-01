@@ -4,43 +4,34 @@
 
 ## Требования
 
-- Perl 5.10 или выше
-- SQLite3
-- Модули Perl (установка через cpan):
-  - CGI::Simple
-  - DBI
-  - DBD::SQLite
-  - Template
-  - Crypt::PBKDF2
-  - JSON
-  - DateTime
-  - File::Spec
-  - MIME::Base64
+- Docker
+- Docker Compose
 
-## Установка
+## Установка и запуск через Docker
 
-1. Установите необходимые модули Perl:
+1. Клонируйте репозиторий:
 ```bash
-cpan CGI::Simple DBI DBD::SQLite Template Crypt::PBKDF2 JSON DateTime File::Spec MIME::Base64
+git clone <repository-url>
+cd theater
 ```
 
-2. Создайте базу данных:
+2. Запустите приложение через Docker Compose:
 ```bash
-perl database/init_db.pl
+docker-compose up -d
 ```
 
-3. Настройте права доступа:
-```bash
-chmod +x index.cgi
-chmod 755 templates static
-chmod 644 static/*/*.{css,js}
+3. Приложение будет доступно по адресу:
+```
+http://localhost:8080
 ```
 
 ## Структура проекта
 
 ```
 .
-├── index.cgi           # Основной CGI-скрипт
+├── Dockerfile           # Конфигурация Docker-образа
+├── docker-compose.yml  # Конфигурация Docker Compose
+├── index.cgi          # Основной CGI-скрипт
 ├── database/
 │   ├── init_db.pl     # Скрипт инициализации БД
 │   ├── init.sql       # SQL-схема БД
@@ -68,13 +59,58 @@ chmod 644 static/*/*.{css,js}
    - Просмотр статистики
    - Управление пользователями
 
-## Запуск
-
-1. Разместите проект в директории веб-сервера с поддержкой CGI
-2. Откройте в браузере http://your-server/path/to/index.cgi
-
 ## Учетные данные по умолчанию
 
 - Администратор:
   - Логин: admin
-  - Пароль: admin123 
+  - Пароль: admin123
+
+## Управление контейнером
+
+### Запуск
+```bash
+docker-compose up -d
+```
+
+### Остановка
+```bash
+docker-compose down
+```
+
+### Просмотр логов
+```bash
+docker-compose logs -f
+```
+
+### Перезапуск
+```bash
+docker-compose restart
+```
+
+## Решение проблем
+
+1. Если приложение недоступно, проверьте логи:
+```bash
+docker-compose logs -f
+```
+
+2. Если нужно пересоздать базу данных:
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+3. Если нужно войти в контейнер:
+```bash
+docker-compose exec app bash
+```
+
+## Разработка
+
+Для разработки рекомендуется использовать режим с монтированием локальных файлов:
+
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+Это позволит вносить изменения в код без пересборки образа. 
