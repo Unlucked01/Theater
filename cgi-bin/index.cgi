@@ -125,7 +125,7 @@ my $current_user = get_current_user();
 
 # Не выводим заголовок для действий, которые сами управляют заголовками
 unless ($action eq 'logout' || $action eq 'add_to_cart' || $action eq 'register' || $action eq 'do_login' || 
-        $action eq 'update_order_status' || $action eq 'update_user_role') {
+        $action eq 'update_order_status' || $action eq 'update_user_role' || $action eq 'select_zone' || $action eq 'admin') {
     print $cgi->header(-type => 'text/html', -charset => 'utf-8');
 }
 
@@ -290,6 +290,23 @@ sub show_events {
         @bind_values
     );
 
+    # Ensure UTF-8 encoding for text fields in events
+    foreach my $event (@$events) {
+        # Check if the data is already UTF-8 to avoid double-decoding
+        if ($event->{title} && !Encode::is_utf8($event->{title})) {
+            $event->{title} = Encode::decode_utf8($event->{title});
+        }
+        if ($event->{performers} && !Encode::is_utf8($event->{performers})) {
+            $event->{performers} = Encode::decode_utf8($event->{performers});
+        }
+        if ($event->{venue} && !Encode::is_utf8($event->{venue})) {
+            $event->{venue} = Encode::decode_utf8($event->{venue});
+        }
+        if ($event->{description} && !Encode::is_utf8($event->{description})) {
+            $event->{description} = Encode::decode_utf8($event->{description});
+        }
+    }
+
     my $vars = {
         events => $events,
         search => $search,
@@ -385,7 +402,8 @@ sub show_admin {
         total_events => $stats->{total_events},
         event_stats => $stats->{event_stats},
         event_sales_data => $stats->{event_sales_data},
-        active_tab => $active_tab
+        active_tab => $active_tab,
+        zones => get_all_zones()
     };
     
     print $cgi->header(-type => 'text/html', -charset => 'utf-8');
@@ -441,6 +459,20 @@ sub show_event {
         return;
     }
     
+    # Ensure UTF-8 encoding for event details
+    if ($event->{title} && !Encode::is_utf8($event->{title})) {
+        $event->{title} = Encode::decode_utf8($event->{title});
+    }
+    if ($event->{performers} && !Encode::is_utf8($event->{performers})) {
+        $event->{performers} = Encode::decode_utf8($event->{performers});
+    }
+    if ($event->{venue} && !Encode::is_utf8($event->{venue})) {
+        $event->{venue} = Encode::decode_utf8($event->{venue});
+    }
+    if ($event->{description} && !Encode::is_utf8($event->{description})) {
+        $event->{description} = Encode::decode_utf8($event->{description});
+    }
+    
     # Get zones for this event
     my $event_zones = $dbh->selectall_arrayref(
         "SELECT z.*, ez.available_seats 
@@ -450,6 +482,17 @@ sub show_event {
         { Slice => {} },
         $event_id
     );
+    
+    # Ensure UTF-8 encoding for zone names
+    foreach my $zone (@$event_zones) {
+        if ($zone->{name} && !Encode::is_utf8($zone->{name})) {
+            $zone->{name} = Encode::decode_utf8($zone->{name});
+        }
+        
+        if ($zone->{description} && !Encode::is_utf8($zone->{description})) {
+            $zone->{description} = Encode::decode_utf8($zone->{description});
+        }
+    }
     
     my $vars = {
         title => $event->{title},
@@ -484,6 +527,13 @@ sub get_sales_statistics {
          LIMIT 10",
         { Slice => {} }
     );
+    
+    # Ensure proper UTF-8 encoding for event titles
+    foreach my $stat (@$event_stats) {
+        if ($stat->{title} && !Encode::is_utf8($stat->{title})) {
+            $stat->{title} = Encode::decode_utf8($stat->{title});
+        }
+    }
     
     # Вычисляем процент для каждого мероприятия
     my $max_sales = 0;
@@ -531,10 +581,19 @@ sub get_latest_events {
     
     # Ensure UTF-8 encoding for text fields
     foreach my $event (@$events) {
-        $event->{title} = $event->{title};
-        $event->{performers} = $event->{performers};
-        $event->{venue} = $event->{venue};
-        $event->{description} = $event->{description};
+        # Check if the data is already UTF-8 to avoid double-decoding
+        if ($event->{title} && !Encode::is_utf8($event->{title})) {
+            $event->{title} = Encode::decode_utf8($event->{title});
+        }
+        if ($event->{performers} && !Encode::is_utf8($event->{performers})) {
+            $event->{performers} = Encode::decode_utf8($event->{performers});
+        }
+        if ($event->{venue} && !Encode::is_utf8($event->{venue})) {
+            $event->{venue} = Encode::decode_utf8($event->{venue});
+        }
+        if ($event->{description} && !Encode::is_utf8($event->{description})) {
+            $event->{description} = Encode::decode_utf8($event->{description});
+        }
     }
     
     return $events;
@@ -558,10 +617,19 @@ sub get_all_events {
     my $events = $sth->fetchall_arrayref({});
     
     foreach my $event (@$events) {
-        $event->{title} = $event->{title};
-        $event->{performers} = $event->{performers};
-        $event->{venue} = $event->{venue};
-        $event->{description} = $event->{description};
+        # Check if the data is already UTF-8 to avoid double-decoding
+        if ($event->{title} && !Encode::is_utf8($event->{title})) {
+            $event->{title} = Encode::decode_utf8($event->{title});
+        }
+        if ($event->{performers} && !Encode::is_utf8($event->{performers})) {
+            $event->{performers} = Encode::decode_utf8($event->{performers});
+        }
+        if ($event->{venue} && !Encode::is_utf8($event->{venue})) {
+            $event->{venue} = Encode::decode_utf8($event->{venue});
+        }
+        if ($event->{description} && !Encode::is_utf8($event->{description})) {
+            $event->{description} = Encode::decode_utf8($event->{description});
+        }
     }
     
     return $events;
@@ -581,6 +649,19 @@ sub get_cart_items {
         { Slice => {} },
         $user_id
     );
+    
+    # Ensure UTF-8 encoding for text fields in cart items
+    foreach my $item (@$cart_items) {
+        if ($item->{title} && !Encode::is_utf8($item->{title})) {
+            $item->{title} = Encode::decode_utf8($item->{title});
+        }
+        if ($item->{venue} && !Encode::is_utf8($item->{venue})) {
+            $item->{venue} = Encode::decode_utf8($item->{venue});
+        }
+        if ($item->{zone_name} && !Encode::is_utf8($item->{zone_name})) {
+            $item->{zone_name} = Encode::decode_utf8($item->{zone_name});
+        }
+    }
     
     return $cart_items;
 }
@@ -602,7 +683,22 @@ sub get_all_orders {
          ORDER BY o.created_at DESC"
     );
     $sth->execute();
-    return $sth->fetchall_arrayref({});
+    my $orders = $sth->fetchall_arrayref({});
+    
+    # Ensure UTF-8 encoding for text fields in orders
+    foreach my $order (@$orders) {
+        if ($order->{user_login} && !Encode::is_utf8($order->{user_login})) {
+            $order->{user_login} = Encode::decode_utf8($order->{user_login});
+        }
+        if ($order->{event_title} && !Encode::is_utf8($order->{event_title})) {
+            $order->{event_title} = Encode::decode_utf8($order->{event_title});
+        }
+        if ($order->{zone_name} && !Encode::is_utf8($order->{zone_name})) {
+            $order->{zone_name} = Encode::decode_utf8($order->{zone_name});
+        }
+    }
+    
+    return $orders;
 }
 
 sub get_manager_events {
@@ -614,7 +710,26 @@ sub get_manager_events {
          ORDER BY date, time"
     );
     $sth->execute();
-    return $sth->fetchall_arrayref({});
+    my $events = $sth->fetchall_arrayref({});
+    
+    # Ensure UTF-8 encoding for text fields
+    foreach my $event (@$events) {
+        # Check if the data is already UTF-8 to avoid double-decoding
+        if ($event->{title} && !Encode::is_utf8($event->{title})) {
+            $event->{title} = Encode::decode_utf8($event->{title});
+        }
+        if ($event->{performers} && !Encode::is_utf8($event->{performers})) {
+            $event->{performers} = Encode::decode_utf8($event->{performers});
+        }
+        if ($event->{venue} && !Encode::is_utf8($event->{venue})) {
+            $event->{venue} = Encode::decode_utf8($event->{venue});
+        }
+        if ($event->{description} && !Encode::is_utf8($event->{description})) {
+            $event->{description} = Encode::decode_utf8($event->{description});
+        }
+    }
+    
+    return $events;
 }
 
 sub get_manager_orders {
@@ -638,7 +753,22 @@ sub get_manager_orders {
             o.created_at DESC"
     );
     $sth->execute();
-    return $sth->fetchall_arrayref({});
+    my $orders = $sth->fetchall_arrayref({});
+    
+    # Ensure UTF-8 encoding for text fields in orders
+    foreach my $order (@$orders) {
+        if ($order->{user_login} && !Encode::is_utf8($order->{user_login})) {
+            $order->{user_login} = Encode::decode_utf8($order->{user_login});
+        }
+        if ($order->{event_title} && !Encode::is_utf8($order->{event_title})) {
+            $order->{event_title} = Encode::decode_utf8($order->{event_title});
+        }
+        if ($order->{zone_name} && !Encode::is_utf8($order->{zone_name})) {
+            $order->{zone_name} = Encode::decode_utf8($order->{zone_name});
+        }
+    }
+    
+    return $orders;
 }
 
 sub handle_login {
@@ -763,14 +893,13 @@ sub handle_add_to_cart {
     my $seat_numbers = $cgi->param('seat_numbers'); # Comma-separated list of seat numbers
     
     # Validate required parameters
-    unless ($event_id && $quantity) {
+    unless ($event_id) {
         print $cgi->header(-type => 'application/json', -charset => 'utf-8');
         my $response = $json->encode({
             success => 0,
             error => 'Отсутствуют обязательные параметры',
             debug => {
-                event_id => $event_id,
-                quantity => $quantity
+                event_id => $event_id
             }
         });
         print $response;
@@ -779,27 +908,15 @@ sub handle_add_to_cart {
     
     # If zone_id and seat_numbers are not provided, redirect to zone selection page
     unless ($zone_id && $seat_numbers) {
-        print $cgi->redirect("?action=select_zone&event_id=$event_id&quantity=$quantity");
+        print $cgi->redirect("?action=select_zone&event_id=$event_id");
         return;
     }
     
     # Parse seat numbers
     my @seat_array = split(',', $seat_numbers);
     
-    # Validate that we have the correct number of seats
-    unless (@seat_array == $quantity) {
-        print $cgi->header(-type => 'application/json', -charset => 'utf-8');
-        my $response = $json->encode({
-            success => 0,
-            error => 'Количество выбранных мест не соответствует указанному количеству билетов',
-            debug => {
-                requested_quantity => $quantity,
-                selected_seats => scalar(@seat_array)
-            }
-        });
-        print $response;
-        return;
-    }
+    # Update quantity to match the number of selected seats
+    $quantity = scalar(@seat_array);
     
     # Get zone details
     my $zone = $dbh->selectrow_hashref(
@@ -931,11 +1048,12 @@ sub handle_add_to_cart {
     });
 }
 
-# Modify handle_select_zone to include reserved seats information
+# Fixed handle_select_zone function
 sub handle_select_zone {
-    my $event_id = $cgi->param('event_id');
+    my $event_id = $cgi->param("event_id");
+    
     unless ($event_id) {
-        print $cgi->redirect('?action=events');
+        print $cgi->redirect("?action=events");
         return;
     }
     
@@ -947,50 +1065,52 @@ sub handle_select_zone {
     );
     
     unless ($event) {
-        print $cgi->header(-type => 'text/html', -charset => 'utf-8');
-        print "Мероприятие не найдено";
+        print $cgi->redirect("?action=events");
         return;
     }
     
-    # Get the single hall zone
-    my $zone = $dbh->selectrow_hashref(
+    # Get ALL zones for this event
+    my $zones = $dbh->selectall_arrayref(
         "SELECT z.*, ez.available_seats 
          FROM zones z
          JOIN event_zones ez ON z.id = ez.zone_id
          WHERE ez.event_id = ?
-         LIMIT 1", 
-        undef, 
+         ORDER BY z.id", 
+        { Slice => {} },
         $event_id
     );
     
-    unless ($zone) {
-        print $cgi->header(-type => 'text/html', -charset => 'utf-8');
+    unless (@$zones) {
+        print $cgi->header(-type => "text/html", -charset => "utf-8");
         print "Для данного мероприятия не найдены зоны";
         return;
     }
     
-    # Get reserved seats count
-    my $reserved_seats_count = $dbh->selectrow_array(
-        "SELECT COUNT(*) 
-         FROM orders 
-         WHERE event_id = ? AND status = 'confirmed'", 
-        undef, 
+    # Get reserved seats for each zone
+    my $reserved_seats_by_zone = {};
+    my $reserved_seats = $dbh->selectall_arrayref(
+        "SELECT zone_id, seat_number
+         FROM reserved_seats
+         WHERE event_id = ?", 
+        { Slice => {} },
         $event_id
-    ) || 0;
+    );
     
-    # Calculate available seats
-    my $available_seats = $zone->{available_seats} - $reserved_seats_count;
+    foreach my $seat (@$reserved_seats) {
+        $reserved_seats_by_zone->{$seat->{zone_id}}->{$seat->{seat_number}} = 1;
+    }
     
-    # Render template with event and zone info
-    print $cgi->header(-type => 'text/html', -charset => 'utf-8');
-    print template('select_zone.html', {
+    # Output header once first, then process template
+    print $cgi->header(-type => "text/html", -charset => "utf-8");
+    
+    # Process the template with the correct data
+    $template->process("select_zone.html", {
         event => $event,
-        zone => $zone,
-        available_seats => $available_seats,
-        max_quantity => 10,  # Set reasonable max quantity
+        zones => $zones,
+        reserved_seats_by_zone => $reserved_seats_by_zone,
         user => $current_user
-    });
-}
+    }) or die $template->error();
+} 
 
 sub handle_remove_from_cart {
     unless ($current_user) {
@@ -1178,13 +1298,37 @@ sub handle_create_event {
         # Get all zones
         my $zones = get_all_zones();
         
+        # Process each zone and check if a custom price was specified
         foreach my $zone (@$zones) {
-            my $zone_price = $cgi->param("zone_price_" . $zone->{id});
-            my $zone_seats = $cgi->param("zone_seats_" . $zone->{id});
+            my $zone_id = $zone->{id};
+            my $zone_name = $zone->{name};
+            # Make sure to decode any zone price parameters
+            my $zone_price_param = "zone_price_$zone_id";
+            my $zone_price = $cgi->param($zone_price_param);
             
-            if ($zone_seats > 0) {
-                $zone_sth->execute($event_id, $zone->{id}, $zone_seats);
+            # Ensure zone price is provided (should be required in the form)
+            unless ($zone_price) {
+                die "Не указана цена для зоны '$zone_name'";
             }
+            
+            my $total_seats = $zone->{total_seats};
+            
+            # Connect zone to event
+            my $event_zone_sth = $dbh->prepare(
+                "INSERT INTO event_zones (event_id, zone_id, available_seats) 
+                 VALUES (?, ?, ?)"
+            );
+            
+            $event_zone_sth->execute($event_id, $zone_id, $total_seats);
+            
+            # Always update zone price
+            my $update_price_sth = $dbh->prepare(
+                "UPDATE zones 
+                 SET price = ? 
+                 WHERE id = ?"
+            );
+            
+            $update_price_sth->execute($zone_price, $zone_id);
         }
         
         $dbh->commit;
@@ -1285,10 +1429,16 @@ sub get_all_zones {
     $sth->execute();
     my $zones = $sth->fetchall_arrayref({});
     
-    # Ensure UTF-8 encoding for text fields
+    # Ensure UTF-8 encoding for text fields - Handle potential wide character issues
     foreach my $zone (@$zones) {
-        $zone->{name} = Encode::decode_utf8($zone->{name});
-        $zone->{description} = Encode::decode_utf8($zone->{description});
+        # Check if the data is already UTF-8 to avoid double-decoding
+        if ($zone->{name} && !Encode::is_utf8($zone->{name})) {
+            $zone->{name} = Encode::decode_utf8($zone->{name});
+        }
+        
+        if ($zone->{description} && !Encode::is_utf8($zone->{description})) {
+            $zone->{description} = Encode::decode_utf8($zone->{description});
+        }
     }
     
     return $zones;
@@ -1321,21 +1471,25 @@ sub handle_add_event {
         return;
     }
     
-    my $title = $cgi->param('title');
-    my $performers = $cgi->param('performers');
-    my $venue = $cgi->param('venue');
-    my $description = $cgi->param('description');
+    # Get form parameters and explicitly decode them
+    my $title = Encode::decode_utf8($cgi->param('title') || '');
+    my $performers = Encode::decode_utf8($cgi->param('performers') || '');
+    my $venue = Encode::decode_utf8($cgi->param('venue') || '');
+    my $description = Encode::decode_utf8($cgi->param('description') || '');
     my $date = $cgi->param('date');
     my $time = $cgi->param('time');
     my $price = $cgi->param('price');
+    
+    # Add debugging info
+    warn "Adding event with title: $title, performers: $performers";
     
     # Fixed seat number for the entire hall
     my $available_seats = 170; # Fixed total seats in our theater hall
     
     # Validate inputs
-    unless ($title && $date && $time && $price) {
+    unless ($title && $date && $time) {
         print $cgi->header(-type => 'text/html', -charset => 'utf-8');
-        print "Отсутствуют обязательные поля";
+        print "Отсутствуют обязательные поля: название, дата или время";
         return;
     }
     
@@ -1352,44 +1506,41 @@ sub handle_add_event {
         $event_sth->execute($title, $performers, $venue, $description, $date, $time, $price, $available_seats);
         my $event_id = $dbh->last_insert_id("", "", "events", "");
         
-        # Create a single zone for the entire hall
-        my $zone_name = "Зал";
-        my $zone_price = $price;
+        # Get all available zones
+        my $zones = get_all_zones();
         
-        # Check if this zone already exists
-        my $zone_id;
-        my $existing_zone = $dbh->selectrow_hashref(
-            "SELECT id FROM zones WHERE name = ?", 
-            undef, 
-            $zone_name
-        );
-        
-        if ($existing_zone) {
-            $zone_id = $existing_zone->{id};
-        } else {
-            # Create new zone
-            my $zone_sth = $dbh->prepare(
-                "INSERT INTO zones (name, price, total_seats, description) 
-                 VALUES (?, ?, ?, ?)"
+        # Process each zone and check if a custom price was specified
+        foreach my $zone (@$zones) {
+            my $zone_id = $zone->{id};
+            my $zone_name = $zone->{name};
+            # Make sure to decode any zone price parameters
+            my $zone_price_param = "zone_price_$zone_id";
+            my $zone_price = $cgi->param($zone_price_param);
+            
+            # Ensure zone price is provided (should be required in the form)
+            unless ($zone_price) {
+                die "Не указана цена для зоны '$zone_name'";
+            }
+            
+            my $total_seats = $zone->{total_seats};
+            
+            # Connect zone to event
+            my $event_zone_sth = $dbh->prepare(
+                "INSERT INTO event_zones (event_id, zone_id, available_seats) 
+                 VALUES (?, ?, ?)"
             );
             
-            $zone_sth->execute(
-                $zone_name, 
-                $zone_price, 
-                $available_seats, 
-                "Единый зал театра"
+            $event_zone_sth->execute($event_id, $zone_id, $total_seats);
+            
+            # Always update zone price
+            my $update_price_sth = $dbh->prepare(
+                "UPDATE zones 
+                 SET price = ? 
+                 WHERE id = ?"
             );
             
-            $zone_id = $dbh->last_insert_id("", "", "zones", "");
+            $update_price_sth->execute($zone_price, $zone_id);
         }
-        
-        # Connect zone to event
-        my $event_zone_sth = $dbh->prepare(
-            "INSERT INTO event_zones (event_id, zone_id, available_seats) 
-             VALUES (?, ?, ?)"
-        );
-        
-        $event_zone_sth->execute($event_id, $zone_id, $available_seats);
         
         $dbh->commit;
     };
@@ -1401,6 +1552,15 @@ sub handle_add_event {
         return;
     }
     
-    # Redirect back to admin page with tab parameter
-    print $cgi->redirect('?action=admin&tab=add-event&success=1');
+    # Send proper redirect headers to ensure browser follows the redirect
+    print $cgi->header(
+        -status => '302 Found',
+        -location => '?action=admin&tab=add-event&success=1',
+        -type => 'text/html',
+        -charset => 'utf-8'
+    );
+    
+    # Add a message that would be displayed if the redirect fails
+    print "Redirecting to admin page...";
+    print '<script>window.location.href="?action=admin&tab=add-event&success=1";</script>';
 } 

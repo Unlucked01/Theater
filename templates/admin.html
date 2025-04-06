@@ -37,19 +37,6 @@
                         </div>
                     </div>
 
-                    <div class="chart-container">
-                        <h3>Продажи по мероприятиям</h3>
-                        <div class="sales-chart">
-                            [% FOREACH stat IN event_stats %]
-                                <div class="chart-bar">
-                                    <div class="bar-fill" data-percentage="[% stat.percentage %]"></div>
-                                    <span class="bar-label">[% stat.title %]</span>
-                                    <span class="bar-value">[% stat.sales %]</span>
-                                </div>
-                            [% END %]
-                        </div>
-                    </div>
-
                     <div class="chart-container detail-chart">
                         <h3>Детальная статистика продаж</h3>
                         <canvas id="eventSalesChart"></canvas>
@@ -94,7 +81,8 @@
                 </div>
                 [% END %]
                 
-                <form action="?action=add_event" method="post">
+                <form action="index.cgi" method="post">
+                    <input type="hidden" name="action" value="add_event">
                     <div class="form-section">
                         <div class="form-group">
                             <label for="title">Название</label>
@@ -128,9 +116,21 @@
                             <input type="time" id="time" name="time" required>
                         </div>
                         
+                        <div class="form-section zone-pricing">
+                            <h4>Цены по зонам</h4>
+                            <p class="form-info-text">Установите цены для каждой зоны театра. Общая цена билета будет рассчитана как минимальная из цен по зонам.</p>
+                            
+                            [% FOREACH zone IN zones %]
+                            <div class="form-group">
+                                <label for="zone_price_[% zone.id %]">Цена для зоны "[% zone.name %]"</label>
+                                <input type="number" id="zone_price_[% zone.id %]" name="zone_price_[% zone.id %]" min="0" step="1" required class="zone-price" value="100">
+                            </div>
+                            [% END %]
+                        </div>
+                        
                         <div class="form-group">
-                            <label for="price">Цена билета</label>
-                            <input type="number" id="price" name="price" min="0" step="0.01" required>
+                            <label for="price">Минимальная цена билета</label>
+                            <input type="number" id="price" name="price" min="0" step="10" readonly>
                         </div>
                         
                         <div class="form-group">
@@ -147,6 +147,33 @@
                         <button type="submit" class="btn">Добавить мероприятие</button>
                     </div>
                 </form>
+                
+                <!-- Immediate script execution for price calculation -->
+                <script>
+                    // Set initial price value
+                    setTimeout(function() {
+                        const priceField = document.getElementById('price');
+                        if (priceField && (!priceField.value || priceField.value === '0')) {
+                            const zoneInputs = document.querySelectorAll('.zone-price');
+                            if (zoneInputs.length > 0) {
+                                let minPrice = Infinity;
+                                zoneInputs.forEach(function(input) {
+                                    if (input.value && parseFloat(input.value) > 0) {
+                                        const price = parseFloat(input.value);
+                                        if (price < minPrice) {
+                                            minPrice = price;
+                                        }
+                                    }
+                                });
+                                if (minPrice !== Infinity) {
+                                    priceField.value = minPrice;
+                                } else {
+                                    priceField.value = 0;
+                                }
+                            }
+                        }
+                    }, 100);
+                </script>
             </div>
         </div>
     </div>
@@ -310,6 +337,12 @@
 }
 
 /* Form styling */
+.error-input {
+    border-color: #dc3545 !important;
+    background-color: #fff8f8 !important;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25) !important;
+}
+
 .event-form-container {
     max-width: 800px;
     margin: 0 auto;
@@ -440,6 +473,46 @@
     border-bottom: 1px solid #eee;
 }
 
+.form-info-text {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.form-section h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+/* Zone pricing styling */
+.form-section:has(h4) {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+}
+
+/* Alternative styling for zone pricing section */
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+.form-section.zone-pricing {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.form-section + .form-section {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
     .admin-page {
@@ -481,8 +554,88 @@
 <script src="https://unpkg.com/tippy.js@6"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Function to calculate minimum price across all zones
+function calculateMinimumPrice() {
+    const zoneInputs = document.querySelectorAll('.zone-price');
+    let minPrice = Infinity;
+    
+    // Check if any zones exist
+    if (zoneInputs.length === 0) {
+        return 0;
+    }
+    
+    // Find the minimum price among all zones
+    zoneInputs.forEach(function(input) {
+        if (input.value && parseFloat(input.value) > 0) {
+            const price = parseFloat(input.value);
+            if (price < minPrice) {
+                minPrice = price;
+            }
+        }
+    });
+    
+    // If no valid prices were found
+    if (minPrice === Infinity) {
+        return 0;
+    }
+    
+    return minPrice;
+}
+
 // Tab switching functionality
 document.addEventListener('DOMContentLoaded', function() {
+    // Form validation for add event form
+    const addEventForm = document.querySelector('form[action="index.cgi"]');
+    if (addEventForm) {
+        addEventForm.addEventListener('submit', function(event) {
+            const zoneInputs = document.querySelectorAll('.zone-price');
+            let allZonesHavePrices = true;
+            
+            zoneInputs.forEach(function(input) {
+                if (!input.value || parseFloat(input.value) <= 0) {
+                    allZonesHavePrices = false;
+                    input.classList.add('error-input');
+                } else {
+                    input.classList.remove('error-input');
+                }
+            });
+            
+            if (!allZonesHavePrices) {
+                event.preventDefault();
+                alert('Пожалуйста, установите положительную цену для всех зон театра.');
+                return false;
+            }
+            
+            // Ensure price field has a value before submission
+            const priceField = document.getElementById('price');
+            if (!priceField.value || parseFloat(priceField.value) <= 0) {
+                const minPrice = calculateMinimumPrice();
+                priceField.value = minPrice;
+                
+                if (minPrice <= 0) {
+                    event.preventDefault();
+                    alert('Минимальная цена билета должна быть больше нуля.');
+                    return false;
+                }
+            }
+            
+            return true;
+        });
+    }
+    
+    // Update price field when zone prices change
+    const zoneInputs = document.querySelectorAll('.zone-price');
+    zoneInputs.forEach(function(input) {
+        input.addEventListener('input', function() {
+            const minPrice = calculateMinimumPrice();
+            document.getElementById('price').value = minPrice;
+        });
+    });
+    
+    // Initialize price on page load
+    const minPrice = calculateMinimumPrice();
+    document.getElementById('price').value = minPrice > 0 ? minPrice : 0;
+    
     // Check for active_tab param
     const activeTabId = '[% active_tab %]';
     if (activeTabId) {
@@ -497,37 +650,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 tabContent.classList.add('active');
             }
         }
-    }
-
-    // Handle form submission
-    const eventForm = document.querySelector('form[action="?action=add_event"]');
-    if (eventForm) {
-        eventForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            
-            fetch(this.action, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.redirected) {
-                    window.location.href = response.url;
-                } else {
-                    return response.text();
-                }
-            })
-            .then(html => {
-                if (html) {
-                    window.location.href = '?action=admin&tab=add-event&success=1';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Произошла ошибка при добавлении мероприятия. Пожалуйста, попробуйте снова.');
-            });
-        });
     }
 
     // Initialize tooltips

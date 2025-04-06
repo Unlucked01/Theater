@@ -52,7 +52,11 @@
                             <span class="event-venue">[% event.venue %]</span>
                         </p>
                         <p class="event-performer">[% event.performer %]</p>
-                        <a href="?action=event&id=[% event.id %]" class="btn">Подробнее</a>
+                        [% IF user %]
+                            <a href="?action=event&event_id=[% event.id %]" class="btn">Подробнее</a>
+                        [% ELSE %]
+                            <a href="?action=login" class="btn">Войти для просмотра</a>
+                        [% END %]
                     </div>
                 [% END %]
             </div>
